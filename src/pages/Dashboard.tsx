@@ -390,6 +390,36 @@ const Dashboard = () => {
                 onClose={() => setIsModalOpen(false)}
                 date={selectedDate}
                 onSubmit={handleSubmit}
+                onDelete={async () => {
+                    if (!user) return
+                    const dateStr = format(selectedDate, 'yyyy-MM-dd')
+
+                    // MOCK DELETE
+                    if (import.meta.env.VITE_USE_MOCK === 'true') {
+                        alert('Mock Delete Successful!')
+                        await fetchData()
+                        return
+                    }
+
+                    try {
+                        const { error } = await supabase
+                            .from('journals')
+                            .delete()
+                            .eq('user_id', user.id)
+                            .eq('date', dateStr)
+
+                        if (error) {
+                            console.error('Delete error:', error)
+                            alert('Failed to delete journal.')
+                            return
+                        }
+                        await fetchData()
+                    } catch (err) {
+                        console.error('Unexpected error:', err)
+                        alert('An unexpected error occurred.')
+                    }
+                }}
+                hasSubmitted={!!submissions[format(selectedDate, 'yyyy-MM-dd')]}
             />
         </div>
     )

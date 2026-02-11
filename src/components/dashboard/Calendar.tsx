@@ -68,7 +68,16 @@ const Calendar = ({ submissions, onDateClick, currentDate }: CalendarProps) => {
     const getCardStyle = (day: Date, isSubmitted: boolean, isCurrentMonth: boolean, isHoliday: boolean) => {
         if (!isCurrentMonth) return "opacity-30 grayscale"
 
-        if (isSubmitted) return "bg-blue-500 text-white shadow-md ring-1 ring-blue-500"
+        // Handle Submitted State with specific overrides for Holidays/Weekends
+        if (isSubmitted) {
+            if (isHoliday || isSunday(day)) {
+                return "bg-blue-50 text-red-500 shadow-md ring-1 ring-blue-500 font-bold hover:text-red-600"
+            }
+            if (isSaturday(day)) {
+                return "bg-blue-50 text-blue-600 shadow-md ring-1 ring-blue-500 font-bold hover:text-blue-700"
+            }
+            return "bg-blue-500 text-white shadow-md ring-1 ring-blue-500 hover:text-slate-900"
+        }
 
         const isPastOrToday = isBefore(day, new Date()) || isToday(day)
 
@@ -88,6 +97,17 @@ const Calendar = ({ submissions, onDateClick, currentDate }: CalendarProps) => {
         }
 
         return "bg-white text-gray-700 border border-gray-100 hover:border-blue-200"
+    }
+
+    // Helper to determine checkmark color
+    const getCheckColor = (day: Date, isSubmitted: boolean, isHoliday: boolean) => {
+        if (!isSubmitted) return ""
+        // If it's a holiday/weekend submitted (bg-blue-50), use blue check
+        if (isHoliday || isSunday(day) || isSaturday(day)) {
+            return "text-blue-500"
+        }
+        // Default submitted (bg-blue-500), use white check
+        return "text-white"
     }
 
     return (
@@ -142,7 +162,7 @@ const Calendar = ({ submissions, onDateClick, currentDate }: CalendarProps) => {
                                     </span>
                                 )}
                                 {isSubmitted && (
-                                    <Check className="w-4 h-4 mt-1 opacity-80" />
+                                    <Check className={cn("w-4 h-4 mt-1 opacity-80", getCheckColor(day, !!isSubmitted, isHoliday))} />
                                 )}
                             </div>
                         )
