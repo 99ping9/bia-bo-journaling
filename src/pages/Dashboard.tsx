@@ -224,6 +224,7 @@ const Dashboard = () => {
 
             // Refresh data
             await fetchData()
+            await fetchUserSubmissions(user.id)
 
         } catch (err) {
             console.error('Unexpected error:', err)
@@ -398,6 +399,7 @@ const Dashboard = () => {
                     if (import.meta.env.VITE_USE_MOCK === 'true') {
                         alert('Mock Delete Successful!')
                         await fetchData()
+                        await fetchUserSubmissions(user.id)
                         return
                     }
 
@@ -414,6 +416,7 @@ const Dashboard = () => {
                             return
                         }
                         await fetchData()
+                        await fetchUserSubmissions(user.id)
                     } catch (err) {
                         console.error('Unexpected error:', err)
                         alert('An unexpected error occurred.')
