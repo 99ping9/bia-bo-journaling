@@ -178,7 +178,7 @@ const Home = () => {
                     )}
 
                     <div className="mt-6 text-center text-xs text-gray-400">
-                        Bia-Bio Consulting Certification System
+                        BIA-BO Consulting Certification System
                     </div>
                 </div>
             </div>
