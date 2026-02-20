@@ -170,10 +170,11 @@ const Dashboard = () => {
                 avatar: u.avatar,
                 bg_color: u.bg_color
             })).sort((a, b) => {
-                if (a.hasSubmittedToday === b.hasSubmittedToday) {
-                    return a.username.localeCompare(b.username)
-                }
-                return a.hasSubmittedToday ? -1 : 1
+                // Current user always first
+                if (a.id === user?.id) return -1
+                if (b.id === user?.id) return 1
+                // Rest: alphabetical (Korean)
+                return a.username.localeCompare(b.username, 'ko')
             }) || []
 
             setCommunityStatus(commStatus)
@@ -435,6 +436,7 @@ const Dashboard = () => {
                 <div className="space-y-6">
                     <CommunityList
                         users={communityStatus}
+                        currentUserId={user?.id}
                         onUserClick={(u) => setViewedUser({
                             id: u.id,
                             username: u.username,

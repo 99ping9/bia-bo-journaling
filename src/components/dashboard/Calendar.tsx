@@ -73,36 +73,34 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
 
         const requiredCount = isColumnParticipant ? 5 : 4
         const subCount = daySubmissions.length
-
-        // Logic:
-        // All Complete -> Blue Background
-        // Partial (1 or more but not all) -> Red Background
-        // None -> Default / Red border if past
-
-        if (subCount >= requiredCount) {
-            return "bg-blue-500 text-white shadow-md ring-1 ring-blue-500 hover:bg-blue-600"
-        }
-
-        if (subCount > 0) {
-            // Partial
-            return "bg-red-500 text-white shadow-md ring-1 ring-red-500 hover:bg-red-600"
-        }
-
         const isPastOrToday = isBefore(day, new Date()) || isToday(day)
 
-        // Holiday or Sunday => Red Text
-        if (isHoliday || isSunday(day)) {
-            return "bg-white text-red-500 border border-gray-100"
+        // Color gradient logic for past/today dates:
+        // Red (0) -> Orange -> Amber -> Sky -> Blue (all done)
+        if (isPastOrToday && !isToday(day)) {
+            const ratio = subCount / requiredCount
+            if (ratio === 0) return "bg-red-500 text-white"
+            if (ratio < 0.26) return "bg-orange-500 text-white shadow-sm"
+            if (ratio < 0.51) return "bg-amber-400 text-white shadow-sm"
+            if (ratio < 0.76) return "bg-sky-400 text-white shadow-sm"
+            if (ratio < 1) return "bg-blue-400 text-white shadow-md"
+            return "bg-blue-600 text-white shadow-md ring-1 ring-blue-500"
         }
 
-        if (isSaturday(day)) {
-            return "bg-white text-blue-600 border border-gray-100"
+        // Today: show gradient if submitted, otherwise ring highlight
+        if (isToday(day)) {
+            const ratio = subCount / requiredCount
+            if (ratio === 0) return "bg-white text-gray-700 ring-2 ring-blue-400 ring-offset-2"
+            if (ratio < 0.26) return "bg-orange-500 text-white shadow-sm ring-2 ring-orange-300 ring-offset-1"
+            if (ratio < 0.51) return "bg-amber-400 text-white shadow-sm ring-2 ring-amber-300 ring-offset-1"
+            if (ratio < 0.76) return "bg-sky-400 text-white shadow-sm ring-2 ring-sky-300 ring-offset-1"
+            if (ratio < 1) return "bg-blue-400 text-white shadow-md ring-2 ring-blue-300 ring-offset-1"
+            return "bg-blue-600 text-white shadow-md ring-2 ring-blue-400 ring-offset-1"
         }
 
-        if (isPastOrToday) {
-            return "bg-white text-gray-400 border border-gray-100"
-        }
-
+        // Future dates
+        if (isHoliday || isSunday(day)) return "bg-white text-red-500 border border-gray-100"
+        if (isSaturday(day)) return "bg-white text-blue-600 border border-gray-100"
         return "bg-white text-gray-700 border border-gray-100 hover:border-blue-200"
     }
 
@@ -141,6 +139,8 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
                         const requiredCount = isColumnParticipant ? 5 : 4
                         const isAllDone = subCount >= requiredCount
                         const isPartial = subCount > 0 && !isAllDone
+                        const isPastOrToday2 = isBefore(day, new Date()) || isToday(day)
+                        const hasColoredBg = (isPastOrToday2 && subCount > 0) || (isPastOrToday2 && !isToday(day)) || isAllDone || isPartial
 
                         return (
                             <div
@@ -148,22 +148,20 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
                                 onClick={() => onDateClick?.(day)}
                                 className={cn(
                                     "aspect-square rounded-xl flex flex-col items-center justify-center transition-all duration-200 relative group",
-                                    onDateClick ? "cursor-pointer hover:bg-slate-50" : "cursor-default",
-                                    getCardStyle(day, daySubmissions, isCurrentMonth, isHoliday),
-                                    isToday(day) && subCount === 0 && "ring-2 ring-blue-400 ring-offset-2" // Highlight today additionally
+                                    onDateClick ? "cursor-pointer" : "cursor-default",
+                                    getCardStyle(day, daySubmissions, isCurrentMonth, isHoliday)
                                 )}
                             >
                                 <span className={cn(
                                     "text-sm font-semibold relative z-10",
-                                    // Make text white if background is colored
-                                    (isAllDone || isPartial) ? "text-white" : ""
+                                    hasColoredBg ? "text-white" : ""
                                 )}>
                                     {format(day, 'd')}
                                 </span>
                                 {holidayName && (
                                     <span className={cn(
                                         "text-[10px] sm:text-xs mt-0.5 font-medium truncate w-full text-center px-1",
-                                        (isAllDone || isPartial) ? "text-blue-100" : ""
+                                        hasColoredBg ? "text-white/80" : ""
                                     )}>
                                         {holidayName}
                                     </span>
@@ -171,8 +169,8 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
 
                                 {subCount > 0 && (
                                     <div className="flex items-center gap-0.5 mt-1">
-                                        <Check className={cn("w-3 h-3", (isAllDone || isPartial) ? "text-white" : "text-blue-500")} />
-                                        <span className={cn("text-xs font-bold", (isAllDone || isPartial) ? "text-white" : "text-blue-600")}>
+                                        <Check className={cn("w-3 h-3", hasColoredBg ? "text-white" : "text-blue-500")} />
+                                        <span className={cn("text-xs font-bold", hasColoredBg ? "text-white" : "text-blue-600")}>
                                             {subCount}
                                         </span>
                                     </div>
@@ -187,3 +185,4 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
 }
 
 export default Calendar
+

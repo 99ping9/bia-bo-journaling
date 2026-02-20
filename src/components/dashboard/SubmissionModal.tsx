@@ -39,9 +39,12 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isCo
 
         setIsSubmitting(true)
 
+        // For 'mate', there's no URL - send a default value so DB doesn't reject it
+        const contentToSubmit = selectedType === 'mate' ? 'completed' : link
+
         await onSubmit({
             type: selectedType,
-            link: link, // For Mate this might be empty string or "checked"
+            link: contentToSubmit,
             amount: selectedType === 'account' ? parseInt(amount.replace(/,/g, ''), 10) : undefined
         })
 
