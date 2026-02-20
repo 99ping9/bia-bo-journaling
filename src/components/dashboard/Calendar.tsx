@@ -146,9 +146,13 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
                         const isHoliday = !!holidayName
                         const requiredCount = isColumnParticipant ? 5 : 4
                         const isAllDone = subCount >= requiredCount
-                        const isPartial = subCount > 0 && !isAllDone
                         const isPastOrToday2 = isBefore(day, new Date()) || isToday(day)
-                        const hasColoredBg = (isPastOrToday2 && subCount > 0) || (isPastOrToday2 && !isToday(day)) || isAllDone || isPartial
+                        const isWeekendDay = isSunday(day) || isSaturday(day)
+                        const isSpecialDay = isHoliday || isWeekendDay
+                        // hasColoredBg = true only when getCardStyle actually returns a colored (non-white) background
+                        const hasColoredBg = isAllDone ||                                        // all done = always blue
+                            (isPastOrToday2 && !isToday(day) && !isSpecialDay) ||               // past normal weekday (red/gradient)
+                            (isToday(day) && subCount > 0)                                      // today with some submissions
 
                         return (
                             <div
