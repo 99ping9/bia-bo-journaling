@@ -197,24 +197,27 @@ const Dashboard = () => {
         const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
         try {
+            const payload = {
+                user_id: user.id,
+                date: dateStr,
+                type: data.type,
+                content: data.link?.trim() || null, // send null if empty, not ""
+                amount: data.amount ?? null
+            }
+            console.log('Submitting payload:', payload)
+
             const { error } = await supabase
                 .from('journals')
-                .insert([
-                    {
-                        user_id: user.id,
-                        date: dateStr,
-                        type: data.type,
-                        content: data.link, // using content column now
-                        amount: data.amount
-                    }
-                ])
+                .insert([payload])
 
             if (error) {
-                if (error.code === '23505') { // Unique violation
-                    alert('You have already submitted this type for today.')
+                console.error('Submission error full:', JSON.stringify(error))
+                if (error.code === '23505') {
+                    alert('이미 오늘 해당 항목을 제출했습니다.')
+                } else if (error.code === '42703') {
+                    alert('DB 컬럼 오류: Supabase에서 마이그레이션이 필요합니다. (type/content 컬럼 누락)')
                 } else {
-                    console.error('Submission error:', error)
-                    alert('Failed to submit. Please try again.')
+                    alert(`제출 실패: ${error.message}`)
                 }
                 return
             }
@@ -225,6 +228,7 @@ const Dashboard = () => {
 
         } catch (err) {
             console.error('Unexpected error:', err)
+            alert('예상치 못한 오류가 발생했습니다.')
         }
     }
 

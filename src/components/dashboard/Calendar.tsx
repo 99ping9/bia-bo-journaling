@@ -74,35 +74,43 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
         const requiredCount = isColumnParticipant ? 5 : 4
         const subCount = daySubmissions.length
         const isPastOrToday = isBefore(day, new Date()) || isToday(day)
+        const isWeekend = isSunday(day) || isSaturday(day)
+        const isSpecialDay = isHoliday || isWeekend
 
-        // Color gradient logic for past/today dates:
-        // Red (0) -> Orange -> Amber -> Sky -> Blue (all done)
-        if (isPastOrToday && !isToday(day)) {
-            const ratio = subCount / requiredCount
-            if (ratio === 0) return "bg-red-500 text-white"
-            if (ratio < 0.26) return "bg-orange-500 text-white shadow-sm"
-            if (ratio < 0.51) return "bg-amber-400 text-white shadow-sm"
-            if (ratio < 0.76) return "bg-sky-400 text-white shadow-sm"
-            if (ratio < 1) return "bg-blue-400 text-white shadow-md"
+        // All done = always blue, regardless of day type
+        if (subCount >= requiredCount) {
+            if (isToday(day)) return "bg-blue-600 text-white shadow-md ring-2 ring-blue-400 ring-offset-1"
             return "bg-blue-600 text-white shadow-md ring-1 ring-blue-500"
         }
 
-        // Today: show gradient if submitted, otherwise ring highlight
+        // Today with 0 submissions: ring highlight only
         if (isToday(day)) {
+            if (subCount === 0) return "bg-white text-gray-700 ring-2 ring-blue-400 ring-offset-2"
             const ratio = subCount / requiredCount
-            if (ratio === 0) return "bg-white text-gray-700 ring-2 ring-blue-400 ring-offset-2"
             if (ratio < 0.26) return "bg-orange-500 text-white shadow-sm ring-2 ring-orange-300 ring-offset-1"
             if (ratio < 0.51) return "bg-amber-400 text-white shadow-sm ring-2 ring-amber-300 ring-offset-1"
             if (ratio < 0.76) return "bg-sky-400 text-white shadow-sm ring-2 ring-sky-300 ring-offset-1"
-            if (ratio < 1) return "bg-blue-400 text-white shadow-md ring-2 ring-blue-300 ring-offset-1"
-            return "bg-blue-600 text-white shadow-md ring-2 ring-blue-400 ring-offset-1"
+            return "bg-blue-400 text-white shadow-md ring-2 ring-blue-300 ring-offset-1"
         }
 
-        // Future dates
-        if (isHoliday || isSunday(day)) return "bg-white text-red-500 border border-gray-100"
-        if (isSaturday(day)) return "bg-white text-blue-600 border border-gray-100"
+        // Past non-holiday weekdays: gradient based on submission count
+        if (isPastOrToday && !isSpecialDay) {
+            if (subCount === 0) return "bg-red-500 text-white"
+            const ratio = subCount / requiredCount
+            if (ratio < 0.26) return "bg-orange-500 text-white shadow-sm"
+            if (ratio < 0.51) return "bg-amber-400 text-white shadow-sm"
+            if (ratio < 0.76) return "bg-sky-400 text-white shadow-sm"
+            return "bg-blue-400 text-white shadow-md"
+        }
+
+        // Holidays & weekends (past or future): white background, colored text only
+        if (isHoliday || isSunday(day)) return "bg-white text-red-400 border border-gray-100"
+        if (isSaturday(day)) return "bg-white text-blue-500 border border-gray-100"
+
+        // Future normal days
         return "bg-white text-gray-700 border border-gray-100 hover:border-blue-200"
     }
+
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
