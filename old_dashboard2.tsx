@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -11,9 +11,8 @@ import { Loader2, Plus, Pencil, Check, X } from 'lucide-react'
 
 import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend, isBefore, isEqual, isToday, subDays, isSameDay } from 'date-fns'
 import { SubmissionType, SUBMISSION_TYPES } from '@/types'
-import { ANIMALS, BG_COLORS } from '@/lib/constants'
 
-// Programme launches Feb 23 2026 — no fine or logging before this date
+// Programme launches Feb 23 2026 ??no fine or logging before this date
 const PROGRAM_START_DATE = new Date(2026, 1, 23) // Feb 23, 2026
 
 const Dashboard = () => {
@@ -28,7 +27,6 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState(new Date())
-    const [selectedDefaultType, setSelectedDefaultType] = useState<SubmissionType | undefined>(undefined)
     const [isAdminMode, setIsAdminMode] = useState(false)
 
 
@@ -132,10 +130,10 @@ const Dashboard = () => {
 
                 // Mock Community Status
                 setCommunityStatus([
-                    { id: '1', username: 'Alice', hasSubmittedToday: true, bg_color: 'bg-red-100', avatar: '🐶' },
-                    { id: '2', username: 'Bob', hasSubmittedToday: false, bg_color: 'bg-blue-100', avatar: '🐱' },
-                    { id: '3', username: 'Charlie', hasSubmittedToday: true, avatar: '🐯', bg_color: 'bg-yellow-100' },
-                    { id: '4', username: 'David', hasSubmittedToday: false, avatar: '🦁', bg_color: 'bg-green-100' },
+                    { id: '1', username: 'Alice', hasSubmittedToday: true, bg_color: 'bg-red-100', avatar: '?맯' },
+                    { id: '2', username: 'Bob', hasSubmittedToday: false, bg_color: 'bg-blue-100', avatar: '?맩' },
+                    { id: '3', username: 'Charlie', hasSubmittedToday: true, avatar: '?맦', bg_color: 'bg-yellow-100' },
+                    { id: '4', username: 'David', hasSubmittedToday: false, avatar: '?쫨', bg_color: 'bg-green-100' },
                     {
                         id: user?.id || 'me',
                         username: user?.username || 'You',
@@ -200,9 +198,9 @@ const Dashboard = () => {
         }
     }
 
-    const handleDateClick = (date: Date, defaultType?: SubmissionType) => {
-        // Block before program start for normal users, allow for admins for testing
-        if (!isAdminMode && isBefore(date, PROGRAM_START_DATE) && !isEqual(date, PROGRAM_START_DATE)) return
+    const handleDateClick = (date: Date) => {
+        // Block before program start
+        if (isBefore(date, PROGRAM_START_DATE) && !isEqual(date, PROGRAM_START_DATE)) return
 
         if (!isAdminMode) {
             const today = new Date()
@@ -212,7 +210,6 @@ const Dashboard = () => {
         }
 
         setSelectedDate(date)
-        setSelectedDefaultType(defaultType)
         setIsModalOpen(true)
     }
 
@@ -232,7 +229,7 @@ const Dashboard = () => {
                     .eq('type', 'mate')
                 if (error) {
                     console.error('Delete error:', error)
-                    alert(`삭제 실패: ${error.message}`)
+                    alert(`??젣 ?ㅽ뙣: ${error.message}`)
                     return
                 }
                 await fetchData()
@@ -255,7 +252,7 @@ const Dashboard = () => {
 
             if (error) {
                 console.error('Submission error:', JSON.stringify(error))
-                alert(`제출 실패: ${error.message}`)
+                alert(`?쒖텧 ?ㅽ뙣: ${error.message}`)
                 return
             }
 
@@ -264,7 +261,7 @@ const Dashboard = () => {
 
         } catch (err) {
             console.error('Unexpected error:', err)
-            alert('예상치 못한 오류가 발생했습니다.')
+            alert('?덉긽移?紐삵븳 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.')
         }
     }
 
@@ -291,10 +288,8 @@ const Dashboard = () => {
         )
     }
 
-    // Fine Calculation: 10,000원 per missing required submission
-    // Column OFF: max 4 types × 5 days = 200,000원
-    // Column ON:  max 5 types × 5 days = 250,000원
-    // Only counts weekdays on or after PROGRAM_START_DATE
+    // Fine Calculation: 10,000??per missing required submission
+    // Column OFF: max 4 types 횞 5 days = 200,000??    // Column ON:  max 5 types 횞 5 days = 250,000??    // Only counts weekdays on or after PROGRAM_START_DATE
     const calculateFine = () => {
         if (!submissionsLoaded) return 0
         const today = new Date()
@@ -338,7 +333,7 @@ const Dashboard = () => {
                             </div>
                             {isViewingSelf ? (
                                 <>
-                                    안녕하세요, <span className="text-blue-600">{user?.username}</span>님!
+                                    ?덈뀞?섏꽭?? <span className="text-blue-600">{user?.username}</span>??
                                     <button
                                         onClick={() => {
                                             setTempName(user?.username || '')
@@ -354,7 +349,7 @@ const Dashboard = () => {
                                 </>
                             ) : (
                                 <>
-                                    <span className="text-blue-600">{viewedUser?.username}</span>님의 저널링 기록
+                                    <span className="text-blue-600">{viewedUser?.username}</span>?섏쓽 ??먮쭅 湲곕줉
                                     <button
                                         onClick={() => user && setViewedUser({
                                             id: user.id,
@@ -365,8 +360,7 @@ const Dashboard = () => {
                                         })}
                                         className="ml-2 text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded hover:bg-slate-200 transition-colors"
                                     >
-                                        내 기록으로 돌아가기
-                                    </button>
+                                        ??湲곕줉?쇰줈 ?뚯븘媛湲?                                    </button>
                                 </>
                             )}
                         </h1>
@@ -388,43 +382,7 @@ const Dashboard = () => {
                                     autoFocus
                                 />
                             </div>
-                            {/* Avatar/Color inputs */}
-                            <div className="space-y-4 mb-5">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 mb-2 block">동물 선택</label>
-                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                        {ANIMALS.slice(0, 30).map(animal => (
-                                            <button
-                                                key={animal}
-                                                type="button"
-                                                onClick={() => setTempAvatar(animal)}
-                                                className={`w-10 h-10 shrink-0 text-2xl flex items-center justify-center rounded-full transition-all ${tempAvatar === animal
-                                                        ? 'bg-blue-100 ring-2 ring-blue-500 shadow-sm scale-110'
-                                                        : 'bg-slate-50 hover:bg-slate-100 hover:scale-105'
-                                                    }`}
-                                            >
-                                                {animal}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 mb-2 block">배경색 선택</label>
-                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                        {BG_COLORS.map(color => (
-                                            <button
-                                                key={color}
-                                                type="button"
-                                                onClick={() => setTempBgColor(color)}
-                                                className={`w-8 h-8 shrink-0 rounded-full transition-all border-2 ${color} ${tempBgColor === color
-                                                        ? 'border-blue-500 shadow-md scale-110'
-                                                        : 'border-transparent shadow-sm hover:scale-105'
-                                                    }`}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+                            {/* ... (Avatar/Color inputs) ... */}
                             <div className="flex gap-2 justify-end">
                                 <button onClick={() => setIsEditingName(false)} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 font-medium text-sm">Cancel</button>
                                 <button onClick={handleUpdateName} className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium text-sm flex items-center gap-1"><Check className="w-4 h-4" /> Save</button>
@@ -433,13 +391,13 @@ const Dashboard = () => {
                     )}
 
                     <div className="flex items-center gap-4 text-slate-600 font-medium">
-                        <span>지난주 벌금 : </span>
+                        <span>吏?쒖＜ 踰뚭툑 : </span>
                         {!submissionsLoaded ? (
-                            <span className="text-slate-400 font-bold animate-pulse">계산 중...</span>
+                            <span className="text-slate-400 font-bold animate-pulse">怨꾩궛 以?..</span>
                         ) : fineAmount > 0 ? (
-                            <span className="text-red-500 font-bold">{fineAmount.toLocaleString()}원</span>
+                            <span className="text-red-500 font-bold">{fineAmount.toLocaleString()}??/span>
                         ) : (
-                            <span className="text-slate-900 font-bold">0원</span>
+                            <span className="text-slate-900 font-bold">0??/span>
                         )}
                     </div>
                 </div>
@@ -454,7 +412,7 @@ const Dashboard = () => {
                                 : 'bg-slate-50 border-slate-200 text-slate-500'
                                 }`}
                         >
-                            {viewedUser?.is_column_challenge ? '🔥 칼럼 챌린지 ON' : '💤 칼럼 챌린지 OFF'}
+                            {viewedUser?.is_column_challenge ? '?뵦 移쇰읆 梨뚮┛吏 ON' : '?뮘 移쇰읆 梨뚮┛吏 OFF'}
                         </button>
                     )}
 
@@ -476,38 +434,26 @@ const Dashboard = () => {
                 const today = new Date()
                 return (
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">오늘의 현황 ({format(today, 'MM.dd')})</h3>
+                        <h3 className="text-lg font-bold text-slate-800 mb-4">?ㅻ뒛???꾪솴 ({format(today, 'MM.dd')})</h3>
                         <div className="min-w-[600px] grid grid-cols-5 gap-4 text-center">
                             {SUBMISSION_TYPES.map(type => (
                                 <div key={type.id} className="space-y-2">
                                     <div className="font-semibold text-slate-500 text-sm">{type.label}</div>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (isViewingSelf && !(type.id === 'column' && !isParticipant)) {
-                                                handleDateClick(today, type.id as SubmissionType);
-                                            }
-                                        }}
-                                        disabled={!isViewingSelf || (type.id === 'column' && !isParticipant)}
-                                        className={`h-12 w-full flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100 transition-colors ${isViewingSelf && !(type.id === 'column' && !isParticipant)
-                                            ? 'hover:bg-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20'
-                                            : 'cursor-default'
-                                            }`}
-                                    >
+                                    <div className="h-12 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100">
                                         {type.id === 'column' && !isParticipant ? (
                                             <span className="text-slate-300">-</span>
                                         ) : (
                                             (submissions[format(today, 'yyyy-MM-dd')] || []).includes(type.id) ? (
-                                                <div className={`w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center shadow-sm ${isViewingSelf ? 'hover:bg-green-200 hover:scale-110 transition-transform' : ''}`}>
+                                                <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center shadow-sm">
                                                     <Check className="w-5 h-5" />
                                                 </div>
                                             ) : (
-                                                <div className={`w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center ${isViewingSelf ? 'hover:bg-red-100 hover:scale-110 transition-transform' : ''}`}>
+                                                <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center">
                                                     <X className="w-5 h-5" />
                                                 </div>
                                             )
                                         )}
-                                    </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -553,34 +499,33 @@ const Dashboard = () => {
                 submittedTypes={submissions[format(selectedDate, 'yyyy-MM-dd')] || []}
                 existingData={submissionDetails[format(selectedDate, 'yyyy-MM-dd')] || {}}
                 isColumnParticipant={isParticipant}
-                defaultType={selectedDefaultType}
             />
 
             {/* Admin Mode - subtle button at very bottom */}
             <div className="flex justify-center pt-4 pb-2">
                 {isAdminMode ? (
                     <div className="flex items-center gap-3">
-                        <span className="text-xs text-amber-600 font-semibold bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">🔑 관리자 모드 활성</span>
+                        <span className="text-xs text-amber-600 font-semibold bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">?뵎 愿由ъ옄 紐⑤뱶 ?쒖꽦</span>
                         <button
                             onClick={() => setIsAdminMode(false)}
                             className="text-xs text-slate-400 hover:text-red-500 transition-colors underline"
                         >
-                            관리자 모드 OFF
+                            愿由ъ옄 紐⑤뱶 OFF
                         </button>
                     </div>
                 ) : (
                     <button
                         onClick={() => {
-                            const pw = window.prompt('관리자 비밀번호를 입력하세요:')
+                            const pw = window.prompt('愿由ъ옄 鍮꾨?踰덊샇瑜??낅젰?섏꽭??')
                             if (pw === '1212') {
                                 setIsAdminMode(true)
                             } else if (pw !== null) {
-                                alert('비밀번호가 올바르지 않습니다.')
+                                alert('鍮꾨?踰덊샇媛 ?щ컮瑜댁? ?딆뒿?덈떎.')
                             }
                         }}
                         className="text-[10px] text-slate-200 hover:text-slate-400 transition-colors select-none"
                     >
-                        관리자
+                        愿由ъ옄
                     </button>
                 )}
             </div>
