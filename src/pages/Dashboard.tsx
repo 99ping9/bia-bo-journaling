@@ -7,14 +7,15 @@ import { getAnimalAvatar } from '@/lib/utils'
 import Calendar from '@/components/dashboard/Calendar'
 import SubmissionModal from '@/components/dashboard/SubmissionModal'
 import CommunityList from '@/components/dashboard/CommunityList'
-import { Loader2, Plus, Pencil, Check } from 'lucide-react'
+import { Loader2, Plus, Pencil, Check, X } from 'lucide-react'
 
 import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, subWeeks, isWeekend } from 'date-fns'
 import { SubmissionType, SUBMISSION_TYPES } from '@/types'
 
 const Dashboard = () => {
     const { user } = useAuth()
-    const [viewedUser, setViewedUser] = useState<{ id: string, username: string, avatar: string, bg_color: string, is_column_challenge: boolean } | null>(null)
+    const [viewedUser, setViewedUser] = useState<{ id: string, username: string, avatar: string, bg_color: string, is_column_challenge: boolean, created_at?: string } | null>(null)
+    const isViewingSelf = user?.id === viewedUser?.id
 
     const [submissions, setSubmissions] = useState<Record<string, SubmissionType[]>>({})
     const [communityStatus, setCommunityStatus] = useState<{ id: string, username: string, hasSubmittedToday: boolean, avatar?: string, bg_color?: string }[]>([])
@@ -73,15 +74,15 @@ const Dashboard = () => {
 
         // MOCK MODE
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            const mockSubMap: Record<string, boolean> = {}
-            // Generate DETERMINISTIC mock data based on userId to show different data for different users
+            const mockSubMap: Record<string, SubmissionType[]> = {}
+            // Generate DETERMINISTIC mock data based on userId
             const seed = userId.charCodeAt(0) || 0
             const today = new Date()
             for (let i = 1; i <= today.getDate(); i++) {
-                // Simple pseudo-random based on day and user seed
                 if ((i + seed) % 3 === 0) {
                     const d = new Date(today.getFullYear(), today.getMonth(), i)
-                    mockSubMap[format(d, 'yyyy-MM-dd')] = true
+                    const dateStr = format(d, 'yyyy-MM-dd')
+                    mockSubMap[dateStr] = ['journal'] // Simplification for mock
                 }
             }
             setSubmissions(mockSubMap)
@@ -367,8 +368,8 @@ const Dashboard = () => {
                         <button
                             onClick={handleChallengeToggle}
                             className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${viewedUser?.is_column_challenge
-                                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                                    : 'bg-slate-50 border-slate-200 text-slate-500'
+                                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                                : 'bg-slate-50 border-slate-200 text-slate-500'
                                 }`}
                         >
                             {viewedUser?.is_column_challenge ? '🔥 칼럼 챌린지 ON' : '💤 칼럼 챌린지 OFF'}
@@ -388,31 +389,37 @@ const Dashboard = () => {
             </div>
 
             {/* Daily Status Table (Position 2) */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
-                <h3 className="text-lg font-bold text-slate-800 mb-4">오늘의 현황 ({format(today, 'MM.dd')})</h3>
-                <div className="min-w-[600px] grid grid-cols-5 gap-4 text-center">
-                    {SUBMISSION_TYPES.map(type => (
-                        <div key={type.id} className="space-y-2">
-                            <div className="font-semibold text-slate-500 text-sm">{type.label}</div>
-                            <div className="h-12 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100">
-                                {type.id === 'column' && !isParticipant ? (
-                                    <span className="text-slate-300">-</span>
-                                ) : (
-                                    (submissions[format(today, 'yyyy-MM-dd')] || []).includes(type.id) ? (
-                                        <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center shadow-sm">
-                                            <Check className="w-5 h-5" />
-                                        </div>
-                                    ) : (
-                                        <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center">
-                                            <X className="w-5 h-5" />
-                                        </div>
-                                    )
-                                )}
-                            </div>
+            {/* Define today for scope */}
+            {(() => {
+                const today = new Date()
+                return (
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
+                        <h3 className="text-lg font-bold text-slate-800 mb-4">오늘의 현황 ({format(today, 'MM.dd')})</h3>
+                        <div className="min-w-[600px] grid grid-cols-5 gap-4 text-center">
+                            {SUBMISSION_TYPES.map(type => (
+                                <div key={type.id} className="space-y-2">
+                                    <div className="font-semibold text-slate-500 text-sm">{type.label}</div>
+                                    <div className="h-12 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100">
+                                        {type.id === 'column' && !isParticipant ? (
+                                            <span className="text-slate-300">-</span>
+                                        ) : (
+                                            (submissions[format(today, 'yyyy-MM-dd')] || []).includes(type.id) ? (
+                                                <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center shadow-sm">
+                                                    <Check className="w-5 h-5" />
+                                                </div>
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center">
+                                                    <X className="w-5 h-5" />
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            </div>
+                    </div>
+                )
+            })()}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content: Calendar */}
@@ -420,7 +427,7 @@ const Dashboard = () => {
                     <Calendar
                         submissions={submissions}
                         onDateClick={isViewingSelf ? handleDateClick : undefined}
-                        currentDate={today}
+                        currentDate={selectedDate} // Use selectedDate or new Date()
                         isColumnParticipant={isParticipant}
                     />
                 </div>
@@ -434,7 +441,8 @@ const Dashboard = () => {
                             username: u.username,
                             avatar: u.avatar || '',
                             bg_color: u.bg_color || '',
-                            is_column_challenge: false // Mock/Default for community view for now as we didn't fetch it in list
+                            is_column_challenge: false, // Default to false as we don't have this data yet
+                            created_at: new Date().toISOString() // Mock/Default
                         })}
                     />
 
