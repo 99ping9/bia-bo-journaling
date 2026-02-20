@@ -1,13 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
-
-interface User {
-    id: string
-    username: string
-    created_at: string
-    avatar?: string
-    bg_color?: string
-}
+import { User } from '@/types'
 
 interface AuthContextType {
     user: User | null
