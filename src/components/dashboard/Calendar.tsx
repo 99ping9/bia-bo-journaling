@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import {
     format,
     startOfMonth,
@@ -19,12 +19,7 @@ import { cn } from '@/lib/utils'
 
 import { SubmissionType } from '@/types'
 
-interface CalendarProps {
-    submissions: Record<string, SubmissionType[]> // "YYYY-MM-DD": ['journal', 'mate', ...]
-    onDateClick?: (date: Date) => void
-    currentDate: Date
-    isColumnParticipant?: boolean
-}
+
 
 const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant = false }: {
     submissions: Record<string, SubmissionType[]>
@@ -100,28 +95,12 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
             return "bg-white text-red-500 border border-gray-100"
         }
 
-        const isWeekend = isSaturday(day)
-
-        if (isWeekend) {
-            return "bg-white text-blue-600 border border-gray-100" // Blue for Saturday
+        if (isSaturday(day)) {
+            return "bg-white text-blue-600 border border-gray-100"
         }
 
         if (isPastOrToday) {
-            // If today/past and 0 submissions, essentially 'Missing' but usually we just show white/default 
-            // unless we want to highlight missing days aggressively. 
-            // User said "1개라도 빵꾸났으면 빨간바탕" -> implies if count < required but count > 0 is RED.
-            // If count == 0, it's also "빵꾸" technically? 
-            // Let's keep 0 as white/border to distinguish "started but failed" vs "didn't touch" or just adhere to "All done = Blue, Else = Red?"
-            // Reviewing Request: "모든것 작성하면 ... 파란색바탕, 1개라도 빵꾸났으면 빨간바탕"
-            // This implies STRICT binary: All Done vs Not All Done.
-            // But usually empty future days shouldn't be red.
-            // Let's make "Past days with < required" = RED Background?
-            // Or "Has ANY submission but < required" = RED Background?
-            // User said "제출한 갯수만큼 체크표시 숫자가 늘어나도록".
-
-            // Let's go with:
-            // If 0 submissions: distinct style (White/Gray)
-            // If > 0 but < Required: Red Background
+            return "bg-white text-gray-400 border border-gray-100"
         }
 
         return "bg-white text-gray-700 border border-gray-100 hover:border-blue-200"

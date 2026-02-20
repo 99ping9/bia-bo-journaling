@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Link as LinkIcon, Send, Calendar as CalendarIcon, DollarSign, CheckCircle, FileText } from 'lucide-react'
+import { X, Link as LinkIcon, Send, Calendar as CalendarIcon, CheckCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { SubmissionType, SUBMISSION_TYPES } from '@/types'
 
@@ -82,10 +82,10 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isCo
                                     key={type.id}
                                     onClick={() => setSelectedType(type.id)}
                                     className={`px-3 py-2 rounded-xl text-sm font-bold transition-all border flex items-center gap-1.5 ${isSelected
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-200'
-                                            : isDone
-                                                ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
-                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-200'
+                                        : isDone
+                                            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                         }`}
                                 >
                                     {isDone && <CheckCircle className="w-3.5 h-3.5" />}

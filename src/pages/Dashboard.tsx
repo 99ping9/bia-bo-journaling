@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { ANIMALS, BG_COLORS } from '@/lib/constants'
+
 import { getAnimalAvatar } from '@/lib/utils'
 import Calendar from '@/components/dashboard/Calendar'
 import SubmissionModal from '@/components/dashboard/SubmissionModal'
 import CommunityList from '@/components/dashboard/CommunityList'
 import { Loader2, Plus, Pencil, Check, X } from 'lucide-react'
 
-import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, subWeeks, isWeekend } from 'date-fns'
+import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend } from 'date-fns'
 import { SubmissionType, SUBMISSION_TYPES } from '@/types'
 
 const Dashboard = () => {
@@ -23,8 +23,7 @@ const Dashboard = () => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState(new Date())
 
-    // Name Editing State
-    const [isColumnChallenge, setIsColumnChallenge] = useState(false)
+
 
     // Name Editing State
     const [isEditingName, setIsEditingName] = useState(false)
