@@ -19,6 +19,7 @@ const Dashboard = () => {
 
     const [submissions, setSubmissions] = useState<Record<string, SubmissionType[]>>({})
     const [submissionDetails, setSubmissionDetails] = useState<Record<string, Record<string, { link: string, amount: number | null }>>>({}) // date -> type -> {link, amount}
+    const [submissionsLoaded, setSubmissionsLoaded] = useState(false)
     const [communityStatus, setCommunityStatus] = useState<{ id: string, username: string, hasSubmittedToday: boolean, avatar?: string, bg_color?: string }[]>([])
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -90,6 +91,7 @@ const Dashboard = () => {
         }
 
         // REAL MODE
+        setSubmissionsLoaded(false)
         const { data: journals, error } = await supabase
             .from('journals')
             .select('date, type, link, amount')
@@ -111,6 +113,7 @@ const Dashboard = () => {
         })
         setSubmissions(subMap)
         setSubmissionDetails(detailMap)
+        setSubmissionsLoaded(true)
     }
 
     const fetchData = async () => {
@@ -374,7 +377,9 @@ const Dashboard = () => {
 
                     <div className="flex items-center gap-4 text-slate-600 font-medium">
                         <span>지난주 벌금 : </span>
-                        {fineAmount > 0 ? (
+                        {!submissionsLoaded ? (
+                            <span className="text-slate-400 font-bold animate-pulse">계산 중...</span>
+                        ) : fineAmount > 0 ? (
                             <span className="text-red-500 font-bold">{fineAmount.toLocaleString()}원</span>
                         ) : (
                             <span className="text-slate-900 font-bold">0원</span>
