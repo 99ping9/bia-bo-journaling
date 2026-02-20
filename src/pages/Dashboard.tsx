@@ -200,8 +200,8 @@ const Dashboard = () => {
     }
 
     const handleDateClick = (date: Date, defaultType?: SubmissionType) => {
-        // Block before program start
-        if (isBefore(date, PROGRAM_START_DATE) && !isEqual(date, PROGRAM_START_DATE)) return
+        // Block before program start for normal users, allow for admins for testing
+        if (!isAdminMode && isBefore(date, PROGRAM_START_DATE) && !isEqual(date, PROGRAM_START_DATE)) return
 
         if (!isAdminMode) {
             const today = new Date()
@@ -453,8 +453,8 @@ const Dashboard = () => {
                                         }}
                                         disabled={!isViewingSelf || (type.id === 'column' && !isParticipant)}
                                         className={`h-12 w-full flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100 transition-colors ${isViewingSelf && !(type.id === 'column' && !isParticipant)
-                                                ? 'hover:bg-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20'
-                                                : 'cursor-default'
+                                            ? 'hover:bg-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20'
+                                            : 'cursor-default'
                                             }`}
                                     >
                                         {type.id === 'column' && !isParticipant ? (
