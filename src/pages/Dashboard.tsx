@@ -201,24 +201,19 @@ const Dashboard = () => {
                 user_id: user.id,
                 date: dateStr,
                 type: data.type,
-                content: data.link?.trim() || null, // send null if empty, not ""
+                link: data.link?.trim() || 'completed', // 'link' column in actual DB, fallback for mate/empty
                 amount: data.amount ?? null
             }
             console.log('Submitting payload:', payload)
 
+            // Use upsert so editing existing submissions works (no duplicate error)
             const { error } = await supabase
                 .from('journals')
-                .insert([payload])
+                .upsert([payload], { onConflict: 'user_id,date,type' })
 
             if (error) {
-                console.error('Submission error full:', JSON.stringify(error))
-                if (error.code === '23505') {
-                    alert('이미 오늘 해당 항목을 제출했습니다.')
-                } else if (error.code === '42703') {
-                    alert('DB 컬럼 오류: Supabase에서 마이그레이션이 필요합니다. (type/content 컬럼 누락)')
-                } else {
-                    alert(`제출 실패: ${error.message}`)
-                }
+                console.error('Submission error:', JSON.stringify(error))
+                alert(`제출 실패: ${error.message}`)
                 return
             }
 

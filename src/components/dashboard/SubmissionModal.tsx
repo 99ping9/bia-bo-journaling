@@ -100,15 +100,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isCo
                 </div>
 
                 <div className="p-6 overflow-y-auto">
-                    {isSubmitted ? (
-                        <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
-                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
-                                <CheckCircle className="w-8 h-8" />
-                            </div>
-                            <h4 className="text-lg font-bold text-slate-800">인증 완료!</h4>
-                            <p className="text-slate-500 text-sm">이미 완료된 항목입니다.</p>
-                        </div>
-                    ) : isDisabled ? (
+                    {isDisabled ? (
                         <div className="text-center py-10 text-slate-400">
                             칼럼 챌린지에 참여하고 있지 않습니다.
                         </div>
@@ -173,7 +165,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isCo
                                     disabled={isSubmitting}
                                     className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isSubmitting ? '저장 중...' : '인증하기'} <Send className="w-4 h-4" />
+                                    {isSubmitting ? '저장 중... ✈' : isSubmitted ? '수정하기 ✏️' : '인증하기'} <Send className="w-4 h-4" />
                                 </button>
                             </div>
                         </form>
