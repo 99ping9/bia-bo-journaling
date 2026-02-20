@@ -9,7 +9,7 @@ import SubmissionModal from '@/components/dashboard/SubmissionModal'
 import CommunityList from '@/components/dashboard/CommunityList'
 import { Loader2, Plus, Pencil, Check, X } from 'lucide-react'
 
-import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend, isBefore, isEqual } from 'date-fns'
+import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend, isBefore, isEqual, isToday, subDays, isSameDay } from 'date-fns'
 import { SubmissionType, SUBMISSION_TYPES } from '@/types'
 
 // Programme launches Feb 23 2026 — no fine or logging before this date
@@ -27,6 +27,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState(new Date())
+    const [isAdminMode, setIsAdminMode] = useState(false)
 
 
 
@@ -198,8 +199,16 @@ const Dashboard = () => {
     }
 
     const handleDateClick = (date: Date) => {
-        // Block logging before program start date
+        // Block before program start
         if (isBefore(date, PROGRAM_START_DATE) && !isEqual(date, PROGRAM_START_DATE)) return
+
+        if (!isAdminMode) {
+            const today = new Date()
+            const yesterday = subDays(today, 1)
+            // Only allow today and yesterday
+            if (!isToday(date) && !isSameDay(date, yesterday)) return
+        }
+
         setSelectedDate(date)
         setIsModalOpen(true)
     }
@@ -461,8 +470,9 @@ const Dashboard = () => {
                     <Calendar
                         submissions={submissions}
                         onDateClick={isViewingSelf ? handleDateClick : undefined}
-                        currentDate={selectedDate} // Use selectedDate or new Date()
+                        currentDate={selectedDate}
                         isColumnParticipant={isParticipant}
+                        isAdminMode={isAdminMode}
                     />
                 </div>
 
@@ -493,6 +503,35 @@ const Dashboard = () => {
                 existingData={submissionDetails[format(selectedDate, 'yyyy-MM-dd')] || {}}
                 isColumnParticipant={isParticipant}
             />
+
+            {/* Admin Mode - subtle button at very bottom */}
+            <div className="flex justify-center pt-4 pb-2">
+                {isAdminMode ? (
+                    <div className="flex items-center gap-3">
+                        <span className="text-xs text-amber-600 font-semibold bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">🔑 관리자 모드 활성</span>
+                        <button
+                            onClick={() => setIsAdminMode(false)}
+                            className="text-xs text-slate-400 hover:text-red-500 transition-colors underline"
+                        >
+                            관리자 모드 OFF
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => {
+                            const pw = window.prompt('관리자 비밀번호를 입력하세요:')
+                            if (pw === '1212') {
+                                setIsAdminMode(true)
+                            } else if (pw !== null) {
+                                alert('비밀번호가 올바르지 않습니다.')
+                            }
+                        }}
+                        className="text-[10px] text-slate-200 hover:text-slate-400 transition-colors select-none"
+                    >
+                        관리자
+                    </button>
+                )}
+            </div>
         </div>
     )
 }

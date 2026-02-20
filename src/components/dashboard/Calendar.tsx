@@ -24,11 +24,12 @@ const PROGRAM_START_DATE = new Date(2026, 1, 23) // Feb 23, 2026
 
 
 
-const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant = false }: {
+const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant = false, isAdminMode = false }: {
     submissions: Record<string, SubmissionType[]>
     onDateClick?: (date: Date) => void
     currentDate: Date
     isColumnParticipant?: boolean
+    isAdminMode?: boolean
 }) => {
     const [viewDate, setViewDate] = useState(currentDate)
 
@@ -155,21 +156,31 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
                         const isWeekendDay = isSunday(day) || isSaturday(day)
                         const isSpecialDay = isHoliday || isWeekendDay
                         const isBeforeStart = isBefore(day, PROGRAM_START_DATE)
+                        const today = new Date()
+                        const isYesterday = isBefore(today, new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1)) &&
+                            !isToday(day) && !isBeforeStart &&
+                            isBefore(new Date(day.getFullYear(), day.getMonth(), day.getDate()), today)
+                        const isClickable = !isBeforeStart && (
+                            isAdminMode ||
+                            isToday(day) ||
+                            isYesterday
+                        )
 
                         // hasColoredBg = true only when getCardStyle actually returns a colored (non-white) background
                         const hasColoredBg = !isBeforeStart && (
-                            isAllDone ||                                        // all done = always blue
-                            (isPastOrToday2 && !isToday(day) && !isSpecialDay) ||   // past normal weekday (red/gradient)
-                            (isToday(day) && subCount > 0)                          // today with some submissions
+                            isAllDone ||
+                            (isPastOrToday2 && !isToday(day) && !isSpecialDay) ||
+                            (isToday(day) && subCount > 0)
                         )
 
                         return (
                             <div
                                 key={day.toString()}
-                                onClick={() => !isBeforeStart && onDateClick?.(day)}
+                                onClick={() => isClickable && onDateClick?.(day)}
                                 className={cn(
                                     "aspect-square rounded-xl flex flex-col items-center justify-center transition-all duration-200 relative group",
-                                    isBeforeStart ? "cursor-not-allowed" : onDateClick ? "cursor-pointer" : "cursor-default",
+                                    isBeforeStart ? "cursor-not-allowed" :
+                                        isClickable && onDateClick ? "cursor-pointer hover:ring-2 hover:ring-blue-300" : "cursor-default",
                                     getCardStyle(day, daySubmissions, isCurrentMonth, isHoliday)
                                 )}
                             >
