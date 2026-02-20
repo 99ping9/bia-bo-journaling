@@ -3,7 +3,8 @@ export interface User {
     username: string;
     avatar?: string;
     bg_color?: string;
-    is_column_challenge: boolean; // New field
+    is_column_challenge: boolean;
+    created_at?: string; // Added for compatibility
 }
 
 export type SubmissionType = 'journal' | 'account' | 'thread' | 'mate' | 'column';
