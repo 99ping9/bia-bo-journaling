@@ -44,10 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // MOCK MODE CHECK
             if (import.meta.env.VITE_USE_MOCK === 'true') {
                 console.log('Mock Login Mode Active')
-                const mockUser = {
+                const mockUser: User = {
                     id: 'mock-user-id-' + cleanName,
                     username: cleanName,
-                    created_at: new Date().toISOString()
+                    created_at: new Date().toISOString(),
+                    is_column_challenge: false
                 }
                 setUser(mockUser)
                 localStorage.setItem('morning_journal_user', JSON.stringify(mockUser))
@@ -66,13 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return { success: false, error: fetchError.message }
             }
 
-            let targetUser = existingUser
+            let targetUser = existingUser as User
 
             // 2. If not exists, create new user
             if (!existingUser) {
                 const { data: newUser, error: createError } = await supabase
                     .from('users')
-                    .insert([{ username: cleanName }])
+                    .insert([{ username: cleanName, is_column_challenge: false }])
                     .select()
                     .single()
 
@@ -80,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     console.error('Signup error:', createError)
                     return { success: false, error: createError.message }
                 }
-                targetUser = newUser
+                targetUser = newUser as User
             }
 
             // 3. Set state and local storage
@@ -113,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // MOCK MODE
             if (import.meta.env.VITE_USE_MOCK === 'true') {
-                const updatedUser = { ...user, ...updates }
+                const updatedUser: User = { ...user, ...updates }
                 setUser(updatedUser)
                 localStorage.setItem('morning_journal_user', JSON.stringify(updatedUser))
                 return { success: true }
@@ -131,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw error
             }
 
-            const updatedUser = { ...user, ...updates }
+            const updatedUser: User = { ...user, ...updates }
             setUser(updatedUser)
             localStorage.setItem('morning_journal_user', JSON.stringify(updatedUser))
             return { success: true }
