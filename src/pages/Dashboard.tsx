@@ -18,6 +18,7 @@ const Dashboard = () => {
     const isViewingSelf = user?.id === viewedUser?.id
 
     const [submissions, setSubmissions] = useState<Record<string, SubmissionType[]>>({})
+    const [submissionDetails, setSubmissionDetails] = useState<Record<string, Record<string, { link: string, amount: number | null }>>>({}) // date -> type -> {link, amount}
     const [communityStatus, setCommunityStatus] = useState<{ id: string, username: string, hasSubmittedToday: boolean, avatar?: string, bg_color?: string }[]>([])
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -91,7 +92,7 @@ const Dashboard = () => {
         // REAL MODE
         const { data: journals, error } = await supabase
             .from('journals')
-            .select('date, type')
+            .select('date, type, link, amount')
             .eq('user_id', userId)
 
         if (error) {
@@ -100,12 +101,16 @@ const Dashboard = () => {
         }
 
         const subMap: Record<string, SubmissionType[]> = {}
+        const detailMap: Record<string, Record<string, { link: string, amount: number | null }>> = {}
         journals?.forEach(j => {
             const dateKey = j.date
             if (!subMap[dateKey]) subMap[dateKey] = []
             subMap[dateKey].push(j.type as SubmissionType)
+            if (!detailMap[dateKey]) detailMap[dateKey] = {}
+            detailMap[dateKey][j.type] = { link: j.link || '', amount: j.amount ?? null }
         })
         setSubmissions(subMap)
+        setSubmissionDetails(detailMap)
     }
 
     const fetchData = async () => {
@@ -470,8 +475,8 @@ const Dashboard = () => {
                 onClose={() => setIsModalOpen(false)}
                 date={selectedDate}
                 onSubmit={handleSubmit}
-                // onDelete logic needs update for specific types, skipping for brevity in this chunk
                 submittedTypes={submissions[format(selectedDate, 'yyyy-MM-dd')] || []}
+                existingData={submissionDetails[format(selectedDate, 'yyyy-MM-dd')] || {}}
                 isColumnParticipant={isParticipant}
             />
         </div>

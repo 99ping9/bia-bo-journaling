@@ -8,25 +8,42 @@ interface SubmissionModalProps {
     onClose: () => void
     date: Date
     onSubmit: (data: { link: string, type: SubmissionType, amount?: number }) => Promise<void>
-    onDelete?: () => Promise<void> // Kept for interface compatibility but unused for now in multi-mode
+    onDelete?: () => Promise<void>
     submittedTypes: SubmissionType[]
+    existingData: Record<string, { link: string, amount: number | null }> // type -> {link, amount}
     isColumnParticipant: boolean
 }
 
-const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isColumnParticipant }: SubmissionModalProps) => {
+const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, existingData, isColumnParticipant }: SubmissionModalProps) => {
     const [selectedType, setSelectedType] = useState<SubmissionType>('journal')
     const [link, setLink] = useState('')
     const [amount, setAmount] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [mateConfirmed, setMateConfirmed] = useState(false)
 
-    // Reset state when opening
-    useEffect(() => {
-        if (isOpen) {
+    // Pre-fill helper: populate link/amount from existingData for a given type
+    const prefillForType = (type: SubmissionType) => {
+        const existing = existingData[type]
+        if (existing) {
+            if (type === 'account') {
+                setAmount(existing.amount != null ? String(existing.amount) : '')
+            } else if (type !== 'mate') {
+                setLink(existing.link && existing.link !== 'completed' ? existing.link : '')
+            }
+            if (type === 'mate') setMateConfirmed(true)
+        } else {
             setLink('')
             setAmount('')
+            if (type === 'mate') setMateConfirmed(submittedTypes.includes('mate'))
+        }
+    }
+
+    // Reset state when opening — pre-fill journal by default
+    useEffect(() => {
+        if (isOpen) {
             setSelectedType('journal')
-            setMateConfirmed(submittedTypes.includes('mate')) // pre-check if already submitted
+            setIsSubmitting(false)
+            prefillForType('journal')
         }
     }, [isOpen])
 
@@ -85,7 +102,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isCo
                             return (
                                 <button
                                     key={type.id}
-                                    onClick={() => setSelectedType(type.id)}
+                                    onClick={() => { setSelectedType(type.id); prefillForType(type.id) }}
                                     className={`px-3 py-2 rounded-xl text-sm font-bold transition-all border flex items-center gap-1.5 ${isSelected
                                         ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-200'
                                         : isDone
