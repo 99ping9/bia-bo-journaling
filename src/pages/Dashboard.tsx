@@ -274,18 +274,19 @@ const Dashboard = () => {
         )
     }
 
-    // Fine Calculation: 10,000원 per missed weekday (any required type not submitted)
+    // Fine Calculation: 10,000원 per missing required submission
+    // Column OFF: max 4 types × 5 days = 200,000원
+    // Column ON:  max 5 types × 5 days = 250,000원
     const calculateFine = () => {
         if (!submissionsLoaded) return 0
         const today = new Date()
-        const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 }) // Last Monday
+        const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 })
         const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 1 })
 
-        // Get Mon-Fri of last week
         const weekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
             .filter(day => !isWeekend(day))
 
-        let missedDays = 0
+        let totalMisses = 0
         const isParticipant = viewedUser?.is_column_challenge ?? false
 
         weekDays.forEach(day => {
@@ -295,12 +296,11 @@ const Dashboard = () => {
             const requiredTypes: SubmissionType[] = ['journal', 'account', 'thread', 'mate']
             if (isParticipant) requiredTypes.push('column')
 
-            // A day is "missed" if ANY required type is not submitted
-            const hasAllRequired = requiredTypes.every(type => daySubs.includes(type))
-            if (!hasAllRequired) missedDays++
+            const missingCount = requiredTypes.filter(type => !daySubs.includes(type)).length
+            totalMisses += missingCount
         })
 
-        return missedDays * 10000
+        return totalMisses * 10000
     }
 
 
