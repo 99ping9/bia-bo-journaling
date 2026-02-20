@@ -12,10 +12,11 @@ interface SubmissionModalProps {
     submittedTypes: SubmissionType[]
     existingData: Record<string, { link: string, amount: number | null }> // type -> {link, amount}
     isColumnParticipant: boolean
+    defaultType?: SubmissionType
 }
 
-const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, existingData, isColumnParticipant }: SubmissionModalProps) => {
-    const [selectedType, setSelectedType] = useState<SubmissionType>('journal')
+const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, existingData, isColumnParticipant, defaultType }: SubmissionModalProps) => {
+    const [selectedType, setSelectedType] = useState<SubmissionType>(defaultType || 'journal')
     const [link, setLink] = useState('')
     const [amount, setAmount] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -38,12 +39,13 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
         }
     }
 
-    // Reset state when opening — pre-fill journal by default
+    // Reset state when opening — pre-fill defaultType or journal
     useEffect(() => {
         if (isOpen) {
-            setSelectedType('journal')
+            const startType = defaultType || 'journal'
+            setSelectedType(startType)
             setIsSubmitting(false)
-            prefillForType('journal')
+            prefillForType(startType)
         }
     }, [isOpen])
 

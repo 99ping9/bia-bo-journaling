@@ -27,6 +27,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState(new Date())
+    const [selectedDefaultType, setSelectedDefaultType] = useState<SubmissionType | undefined>(undefined)
     const [isAdminMode, setIsAdminMode] = useState(false)
 
 
@@ -198,7 +199,7 @@ const Dashboard = () => {
         }
     }
 
-    const handleDateClick = (date: Date) => {
+    const handleDateClick = (date: Date, defaultType?: SubmissionType) => {
         // Block before program start
         if (isBefore(date, PROGRAM_START_DATE) && !isEqual(date, PROGRAM_START_DATE)) return
 
@@ -210,6 +211,7 @@ const Dashboard = () => {
         }
 
         setSelectedDate(date)
+        setSelectedDefaultType(defaultType)
         setIsModalOpen(true)
     }
 
@@ -442,21 +444,33 @@ const Dashboard = () => {
                             {SUBMISSION_TYPES.map(type => (
                                 <div key={type.id} className="space-y-2">
                                     <div className="font-semibold text-slate-500 text-sm">{type.label}</div>
-                                    <div className="h-12 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (isViewingSelf && !(type.id === 'column' && !isParticipant)) {
+                                                handleDateClick(today, type.id as SubmissionType);
+                                            }
+                                        }}
+                                        disabled={!isViewingSelf || (type.id === 'column' && !isParticipant)}
+                                        className={`h-12 w-full flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100 transition-colors ${isViewingSelf && !(type.id === 'column' && !isParticipant)
+                                                ? 'hover:bg-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20'
+                                                : 'cursor-default'
+                                            }`}
+                                    >
                                         {type.id === 'column' && !isParticipant ? (
                                             <span className="text-slate-300">-</span>
                                         ) : (
                                             (submissions[format(today, 'yyyy-MM-dd')] || []).includes(type.id) ? (
-                                                <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center shadow-sm">
+                                                <div className={`w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center shadow-sm ${isViewingSelf ? 'hover:bg-green-200 hover:scale-110 transition-transform' : ''}`}>
                                                     <Check className="w-5 h-5" />
                                                 </div>
                                             ) : (
-                                                <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center">
+                                                <div className={`w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center ${isViewingSelf ? 'hover:bg-red-100 hover:scale-110 transition-transform' : ''}`}>
                                                     <X className="w-5 h-5" />
                                                 </div>
                                             )
                                         )}
-                                    </div>
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -502,6 +516,7 @@ const Dashboard = () => {
                 submittedTypes={submissions[format(selectedDate, 'yyyy-MM-dd')] || []}
                 existingData={submissionDetails[format(selectedDate, 'yyyy-MM-dd')] || {}}
                 isColumnParticipant={isParticipant}
+                defaultType={selectedDefaultType}
             />
 
             {/* Admin Mode - subtle button at very bottom */}
