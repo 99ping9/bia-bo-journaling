@@ -19,6 +19,9 @@ import { cn } from '@/lib/utils'
 
 import { SubmissionType } from '@/types'
 
+// Programme start date — no logging or coloring before this
+const PROGRAM_START_DATE = new Date(2026, 1, 23) // Feb 23, 2026
+
 
 
 const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant = false }: {
@@ -70,6 +73,8 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
 
     const getCardStyle = (day: Date, daySubmissions: SubmissionType[], isCurrentMonth: boolean, isHoliday: boolean) => {
         if (!isCurrentMonth) return "opacity-30 grayscale"
+        // Before program start: show as locked/disabled
+        if (isBefore(day, PROGRAM_START_DATE)) return "bg-slate-100 text-slate-300 opacity-50"
 
         const requiredCount = isColumnParticipant ? 5 : 4
         const subCount = daySubmissions.length
@@ -149,18 +154,22 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
                         const isPastOrToday2 = isBefore(day, new Date()) || isToday(day)
                         const isWeekendDay = isSunday(day) || isSaturday(day)
                         const isSpecialDay = isHoliday || isWeekendDay
+                        const isBeforeStart = isBefore(day, PROGRAM_START_DATE)
+
                         // hasColoredBg = true only when getCardStyle actually returns a colored (non-white) background
-                        const hasColoredBg = isAllDone ||                                        // all done = always blue
-                            (isPastOrToday2 && !isToday(day) && !isSpecialDay) ||               // past normal weekday (red/gradient)
-                            (isToday(day) && subCount > 0)                                      // today with some submissions
+                        const hasColoredBg = !isBeforeStart && (
+                            isAllDone ||                                        // all done = always blue
+                            (isPastOrToday2 && !isToday(day) && !isSpecialDay) ||   // past normal weekday (red/gradient)
+                            (isToday(day) && subCount > 0)                          // today with some submissions
+                        )
 
                         return (
                             <div
                                 key={day.toString()}
-                                onClick={() => onDateClick?.(day)}
+                                onClick={() => !isBeforeStart && onDateClick?.(day)}
                                 className={cn(
                                     "aspect-square rounded-xl flex flex-col items-center justify-center transition-all duration-200 relative group",
-                                    onDateClick ? "cursor-pointer" : "cursor-default",
+                                    isBeforeStart ? "cursor-not-allowed" : onDateClick ? "cursor-pointer" : "cursor-default",
                                     getCardStyle(day, daySubmissions, isCurrentMonth, isHoliday)
                                 )}
                             >

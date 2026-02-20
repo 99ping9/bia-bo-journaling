@@ -9,8 +9,11 @@ import SubmissionModal from '@/components/dashboard/SubmissionModal'
 import CommunityList from '@/components/dashboard/CommunityList'
 import { Loader2, Plus, Pencil, Check, X } from 'lucide-react'
 
-import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend } from 'date-fns'
+import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend, isBefore, isEqual } from 'date-fns'
 import { SubmissionType, SUBMISSION_TYPES } from '@/types'
+
+// Programme launches Feb 23 2026 — no fine or logging before this date
+const PROGRAM_START_DATE = new Date(2026, 1, 23) // Feb 23, 2026
 
 const Dashboard = () => {
     const { user } = useAuth()
@@ -195,6 +198,8 @@ const Dashboard = () => {
     }
 
     const handleDateClick = (date: Date) => {
+        // Block logging before program start date
+        if (isBefore(date, PROGRAM_START_DATE) && !isEqual(date, PROGRAM_START_DATE)) return
         setSelectedDate(date)
         setIsModalOpen(true)
     }
@@ -277,6 +282,7 @@ const Dashboard = () => {
     // Fine Calculation: 10,000원 per missing required submission
     // Column OFF: max 4 types × 5 days = 200,000원
     // Column ON:  max 5 types × 5 days = 250,000원
+    // Only counts weekdays on or after PROGRAM_START_DATE
     const calculateFine = () => {
         if (!submissionsLoaded) return 0
         const today = new Date()
@@ -285,6 +291,7 @@ const Dashboard = () => {
 
         const weekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
             .filter(day => !isWeekend(day))
+            .filter(day => !isBefore(day, PROGRAM_START_DATE)) // skip days before program start
 
         let totalMisses = 0
         const isParticipant = viewedUser?.is_column_challenge ?? false
