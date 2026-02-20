@@ -197,14 +197,31 @@ const Dashboard = () => {
         const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
         try {
+            // Mate "unchecked" means the user wants to UNDO/delete their submission
+            if (data.type === 'mate' && data.link === 'unchecked') {
+                const { error } = await supabase
+                    .from('journals')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('date', dateStr)
+                    .eq('type', 'mate')
+                if (error) {
+                    console.error('Delete error:', error)
+                    alert(`삭제 실패: ${error.message}`)
+                    return
+                }
+                await fetchData()
+                await fetchUserSubmissions(user.id)
+                return
+            }
+
             const payload = {
                 user_id: user.id,
                 date: dateStr,
                 type: data.type,
-                link: data.link?.trim() || 'completed', // 'link' column in actual DB, fallback for mate/empty
+                link: data.link?.trim() || 'completed',
                 amount: data.amount ?? null
             }
-            console.log('Submitting payload:', payload)
 
             // Use upsert so editing existing submissions works (no duplicate error)
             const { error } = await supabase
@@ -217,7 +234,6 @@ const Dashboard = () => {
                 return
             }
 
-            // Refresh data
             await fetchData()
             await fetchUserSubmissions(user.id)
 

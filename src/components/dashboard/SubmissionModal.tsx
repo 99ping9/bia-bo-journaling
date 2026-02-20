@@ -18,6 +18,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isCo
     const [link, setLink] = useState('')
     const [amount, setAmount] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [mateConfirmed, setMateConfirmed] = useState(false)
 
     // Reset state when opening
     useEffect(() => {
@@ -25,6 +26,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isCo
             setLink('')
             setAmount('')
             setSelectedType('journal')
+            setMateConfirmed(submittedTypes.includes('mate')) // pre-check if already submitted
         }
     }, [isOpen])
 
@@ -39,8 +41,8 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isCo
 
         setIsSubmitting(true)
 
-        // For 'mate', there's no URL - send a default value so DB doesn't reject it
-        const contentToSubmit = selectedType === 'mate' ? 'completed' : link
+        // For 'mate', send 'completed' or 'unchecked' so Dashboard can upsert or delete
+        const contentToSubmit = selectedType === 'mate' ? (mateConfirmed ? 'completed' : 'unchecked') : link
 
         await onSubmit({
             type: selectedType,
@@ -149,13 +151,27 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, isCo
 
                             {selectedType === 'mate' && (
                                 <div className="py-4">
-                                    <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                                        <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                                        <div>
-                                            <h4 className="font-bold text-blue-900 text-sm">메이트 콜 인증</h4>
-                                            <p className="text-blue-700 text-xs mt-1">오늘 메이트와 통화를 완료하셨나요?</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setMateConfirmed(prev => !prev)}
+                                        className={`w-full flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 ${mateConfirmed
+                                            ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200'
+                                            : 'bg-slate-50 border-slate-200 hover:border-blue-200'
+                                            }`}
+                                    >
+                                        <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${mateConfirmed ? 'bg-blue-600 text-white' : 'border-2 border-slate-300 bg-white'
+                                            }`}>
+                                            {mateConfirmed && <CheckCircle className="w-5 h-5" />}
                                         </div>
-                                    </div>
+                                        <div className="text-left">
+                                            <h4 className={`font-bold text-sm ${mateConfirmed ? 'text-blue-900' : 'text-slate-600'}`}>
+                                                메이트 콜 인증
+                                            </h4>
+                                            <p className={`text-xs mt-1 ${mateConfirmed ? 'text-blue-700' : 'text-slate-400'}`}>
+                                                {mateConfirmed ? '✅ 통화 완료로 표시됩니다.' : '클릭하면 오늘 메이트와 통화 완료로 체크됩니다.'}
+                                            </p>
+                                        </div>
+                                    </button>
                                 </div>
                             )}
 
