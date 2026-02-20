@@ -17,13 +17,21 @@ import {
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+import { SubmissionType } from '@/types'
+
 interface CalendarProps {
-    submissions: Record<string, boolean> // "YYYY-MM-DD": true
+    submissions: Record<string, SubmissionType[]> // "YYYY-MM-DD": ['journal', 'mate', ...]
     onDateClick?: (date: Date) => void
     currentDate: Date
+    isColumnParticipant?: boolean
 }
 
-const Calendar = ({ submissions, onDateClick, currentDate }: CalendarProps) => {
+const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant = false }: {
+    submissions: Record<string, SubmissionType[]>
+    onDateClick?: (date: Date) => void
+    currentDate: Date
+    isColumnParticipant?: boolean
+}) => {
     const [viewDate, setViewDate] = useState(currentDate)
 
     const nextMonth = () => setViewDate(addMonths(viewDate, 1))
@@ -65,25 +73,31 @@ const Calendar = ({ submissions, onDateClick, currentDate }: CalendarProps) => {
         '2026-12-25': '성탄절'
     }
 
-    const getCardStyle = (day: Date, isSubmitted: boolean, isCurrentMonth: boolean, isHoliday: boolean) => {
+    const getCardStyle = (day: Date, daySubmissions: SubmissionType[], isCurrentMonth: boolean, isHoliday: boolean) => {
         if (!isCurrentMonth) return "opacity-30 grayscale"
 
-        // Handle Submitted State with specific overrides for Holidays/Weekends
-        if (isSubmitted) {
-            if (isHoliday || isSunday(day)) {
-                return "bg-blue-50 text-red-500 shadow-md ring-1 ring-blue-500 font-bold hover:text-red-600"
-            }
-            if (isSaturday(day)) {
-                return "bg-blue-50 text-blue-600 shadow-md ring-1 ring-blue-500 font-bold hover:text-blue-700"
-            }
-            return "bg-blue-500 text-white shadow-md ring-1 ring-blue-500 hover:text-slate-900"
+        const requiredCount = isColumnParticipant ? 5 : 4
+        const subCount = daySubmissions.length
+
+        // Logic:
+        // All Complete -> Blue Background
+        // Partial (1 or more but not all) -> Red Background
+        // None -> Default / Red border if past
+
+        if (subCount >= requiredCount) {
+            return "bg-blue-500 text-white shadow-md ring-1 ring-blue-500 hover:bg-blue-600"
+        }
+
+        if (subCount > 0) {
+            // Partial
+            return "bg-red-500 text-white shadow-md ring-1 ring-red-500 hover:bg-red-600"
         }
 
         const isPastOrToday = isBefore(day, new Date()) || isToday(day)
 
-        // Holiday or Sunday => Red
+        // Holiday or Sunday => Red Text
         if (isHoliday || isSunday(day)) {
-            return "bg-white text-red-500 border border-gray-100" // Red for holidays/Sundays
+            return "bg-white text-red-500 border border-gray-100"
         }
 
         const isWeekend = isSaturday(day)
@@ -93,21 +107,24 @@ const Calendar = ({ submissions, onDateClick, currentDate }: CalendarProps) => {
         }
 
         if (isPastOrToday) {
-            return "bg-red-50 text-red-900 border border-red-100" // Missing
+            // If today/past and 0 submissions, essentially 'Missing' but usually we just show white/default 
+            // unless we want to highlight missing days aggressively. 
+            // User said "1개라도 빵꾸났으면 빨간바탕" -> implies if count < required but count > 0 is RED.
+            // If count == 0, it's also "빵꾸" technically? 
+            // Let's keep 0 as white/border to distinguish "started but failed" vs "didn't touch" or just adhere to "All done = Blue, Else = Red?"
+            // Reviewing Request: "모든것 작성하면 ... 파란색바탕, 1개라도 빵꾸났으면 빨간바탕"
+            // This implies STRICT binary: All Done vs Not All Done.
+            // But usually empty future days shouldn't be red.
+            // Let's make "Past days with < required" = RED Background?
+            // Or "Has ANY submission but < required" = RED Background?
+            // User said "제출한 갯수만큼 체크표시 숫자가 늘어나도록".
+
+            // Let's go with:
+            // If 0 submissions: distinct style (White/Gray)
+            // If > 0 but < Required: Red Background
         }
 
         return "bg-white text-gray-700 border border-gray-100 hover:border-blue-200"
-    }
-
-    // Helper to determine checkmark color
-    const getCheckColor = (day: Date, isSubmitted: boolean, isHoliday: boolean) => {
-        if (!isSubmitted) return ""
-        // If it's a holiday/weekend submitted (bg-blue-50), use blue check
-        if (isHoliday || isSunday(day) || isSaturday(day)) {
-            return "text-blue-500"
-        }
-        // Default submitted (bg-blue-500), use white check
-        return "text-white"
     }
 
     return (
@@ -137,10 +154,14 @@ const Calendar = ({ submissions, onDateClick, currentDate }: CalendarProps) => {
                 <div className="grid grid-cols-7 gap-3">
                     {calendarDays.map((day) => {
                         const dateKey = format(day, 'yyyy-MM-dd')
-                        const isSubmitted = submissions[dateKey] // logic handled in parent
+                        const daySubmissions = submissions[dateKey] || []
+                        const subCount = daySubmissions.length
                         const isCurrentMonth = isSameMonth(day, monthStart)
                         const holidayName = HOLIDAYS_2026[dateKey]
                         const isHoliday = !!holidayName
+                        const requiredCount = isColumnParticipant ? 5 : 4
+                        const isAllDone = subCount >= requiredCount
+                        const isPartial = subCount > 0 && !isAllDone
 
                         return (
                             <div
@@ -149,20 +170,33 @@ const Calendar = ({ submissions, onDateClick, currentDate }: CalendarProps) => {
                                 className={cn(
                                     "aspect-square rounded-xl flex flex-col items-center justify-center transition-all duration-200 relative group",
                                     onDateClick ? "cursor-pointer hover:bg-slate-50" : "cursor-default",
-                                    getCardStyle(day, !!isSubmitted, isCurrentMonth, isHoliday),
-                                    isToday(day) && !isSubmitted && "ring-2 ring-blue-400 ring-offset-2" // Highlight today additionally
+                                    getCardStyle(day, daySubmissions, isCurrentMonth, isHoliday),
+                                    isToday(day) && subCount === 0 && "ring-2 ring-blue-400 ring-offset-2" // Highlight today additionally
                                 )}
                             >
-                                <span className="text-sm font-semibold relative z-10">
+                                <span className={cn(
+                                    "text-sm font-semibold relative z-10",
+                                    // Make text white if background is colored
+                                    (isAllDone || isPartial) ? "text-white" : ""
+                                )}>
                                     {format(day, 'd')}
                                 </span>
                                 {holidayName && (
-                                    <span className="text-[10px] sm:text-xs mt-0.5 font-medium truncate w-full text-center px-1">
+                                    <span className={cn(
+                                        "text-[10px] sm:text-xs mt-0.5 font-medium truncate w-full text-center px-1",
+                                        (isAllDone || isPartial) ? "text-blue-100" : ""
+                                    )}>
                                         {holidayName}
                                     </span>
                                 )}
-                                {isSubmitted && (
-                                    <Check className={cn("w-4 h-4 mt-1 opacity-80", getCheckColor(day, !!isSubmitted, isHoliday))} />
+
+                                {subCount > 0 && (
+                                    <div className="flex items-center gap-0.5 mt-1">
+                                        <Check className={cn("w-3 h-3", (isAllDone || isPartial) ? "text-white" : "text-blue-500")} />
+                                        <span className={cn("text-xs font-bold", (isAllDone || isPartial) ? "text-white" : "text-blue-600")}>
+                                            {subCount}
+                                        </span>
+                                    </div>
                                 )}
                             </div>
                         )
