@@ -35,7 +35,7 @@ const Header = () => {
                             className="flex items-center gap-2 text-sm font-bold text-slate-600 transition-colors hover:text-sky-600 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200"
                         >
                             <Clock className="w-4 h-4 text-sky-500" />
-                            <span className="hidden sm:inline">크랙타임(~요일 오후9시)</span>
+                            <span className="hidden sm:inline">크랙타임(금요일 오후9시)</span>
                             <span className="sm:hidden">크랙타임</span>
                         </a>
                     </nav>
