@@ -9,12 +9,12 @@ import SubmissionModal from '@/components/dashboard/SubmissionModal'
 import CommunityList from '@/components/dashboard/CommunityList'
 import { Loader2, Plus, Pencil, Check, X } from 'lucide-react'
 
-import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend, isBefore, isEqual, isToday, subDays, isSameDay } from 'date-fns'
+import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend, isBefore, isToday, subDays, isSameDay } from 'date-fns'
 import { SubmissionType, SUBMISSION_TYPES } from '@/types'
 import { ANIMALS, BG_COLORS } from '@/lib/constants'
 
-// Programme launches Feb 23 2026 — no fine or logging before this date
-const PROGRAM_START_DATE = new Date(2026, 1, 23) // Feb 23, 2026
+// Programme launches Feb 22 2026 — no fine or logging before this date
+const PROGRAM_START_DATE = new Date(2026, 1, 22) // Feb 22, 2026
 
 const Dashboard = () => {
     const { user } = useAuth()
@@ -201,14 +201,16 @@ const Dashboard = () => {
     }
 
     const handleDateClick = (date: Date, defaultType?: SubmissionType) => {
+        const is22nd = isSameDay(date, new Date(2026, 1, 22))
+
         // Block before program start for normal users, allow for admins for testing
-        if (!isAdminMode && isBefore(date, PROGRAM_START_DATE) && !isEqual(date, PROGRAM_START_DATE)) return
+        if (!isAdminMode && !is22nd && isBefore(date, PROGRAM_START_DATE) && !isSameDay(date, PROGRAM_START_DATE)) return
 
         if (!isAdminMode) {
             const today = new Date()
             const yesterday = subDays(today, 1)
-            // Only allow today and yesterday
-            if (!isToday(date) && !isSameDay(date, yesterday)) return
+            // Only allow today, yesterday, and the 22nd
+            if (!isToday(date) && !isSameDay(date, yesterday) && !is22nd) return
         }
 
         setSelectedDate(date)
@@ -399,8 +401,8 @@ const Dashboard = () => {
                                                 type="button"
                                                 onClick={() => setTempAvatar(animal)}
                                                 className={`w-10 h-10 shrink-0 text-2xl flex items-center justify-center rounded-full transition-all ${tempAvatar === animal
-                                                        ? 'bg-blue-100 ring-2 ring-blue-500 shadow-sm scale-110'
-                                                        : 'bg-slate-50 hover:bg-slate-100 hover:scale-105'
+                                                    ? 'bg-blue-100 ring-2 ring-blue-500 shadow-sm scale-110'
+                                                    : 'bg-slate-50 hover:bg-slate-100 hover:scale-105'
                                                     }`}
                                             >
                                                 {animal}
@@ -417,8 +419,8 @@ const Dashboard = () => {
                                                 type="button"
                                                 onClick={() => setTempBgColor(color)}
                                                 className={`w-8 h-8 shrink-0 rounded-full transition-all border-2 ${color} ${tempBgColor === color
-                                                        ? 'border-blue-500 shadow-md scale-110'
-                                                        : 'border-transparent shadow-sm hover:scale-105'
+                                                    ? 'border-blue-500 shadow-md scale-110'
+                                                    : 'border-transparent shadow-sm hover:scale-105'
                                                     }`}
                                             />
                                         ))}

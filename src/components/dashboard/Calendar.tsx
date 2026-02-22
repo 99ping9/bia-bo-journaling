@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 import { SubmissionType } from '@/types'
 
 // Programme start date — no logging or coloring before this
-const PROGRAM_START_DATE = new Date(2026, 1, 23) // Feb 23, 2026
+const PROGRAM_START_DATE = new Date(2026, 1, 22) // Feb 22, 2026
 
 
 
