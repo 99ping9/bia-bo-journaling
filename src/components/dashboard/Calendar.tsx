@@ -72,49 +72,23 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
         '2026-12-25': '성탄절'
     }
 
-    const getCardStyle = (day: Date, daySubmissions: SubmissionType[], isCurrentMonth: boolean, isHoliday: boolean) => {
+    const getCardStyle = (day: Date, isCurrentMonth: boolean, isHoliday: boolean) => {
         if (!isCurrentMonth) return "opacity-30 grayscale"
         // Before program start: show as locked/disabled
         if (isBefore(day, PROGRAM_START_DATE)) return "bg-slate-100 text-slate-300 opacity-50"
 
-        const requiredCount = isColumnParticipant ? 5 : 4
-        const subCount = daySubmissions.length
-        const isPastOrToday = isBefore(day, new Date()) || isToday(day)
-        const isWeekend = isSunday(day) || isSaturday(day)
-        const isSpecialDay = isHoliday || isWeekend
+        let baseStyle = "bg-white border "
 
-        // All done = always blue, regardless of day type
-        if (subCount >= requiredCount) {
-            if (isToday(day)) return "bg-blue-600 text-white shadow-md ring-2 ring-blue-400 ring-offset-1"
-            return "bg-blue-600 text-white shadow-md ring-1 ring-blue-500"
-        }
-
-        // Today with 0 submissions: ring highlight only
         if (isToday(day)) {
-            if (subCount === 0) return "bg-white text-gray-700 ring-2 ring-blue-400 ring-offset-2"
-            const ratio = subCount / requiredCount
-            if (ratio < 0.26) return "bg-orange-500 text-white shadow-sm ring-2 ring-orange-300 ring-offset-1"
-            if (ratio < 0.51) return "bg-amber-400 text-white shadow-sm ring-2 ring-amber-300 ring-offset-1"
-            if (ratio < 0.76) return "bg-sky-400 text-white shadow-sm ring-2 ring-sky-300 ring-offset-1"
-            return "bg-blue-400 text-white shadow-md ring-2 ring-blue-300 ring-offset-1"
+            baseStyle += "border-blue-400 ring-2 ring-blue-100 shadow-sm "
+        } else {
+            baseStyle += "border-gray-100 hover:border-blue-200 "
         }
 
-        // Past non-holiday weekdays: gradient based on submission count
-        if (isPastOrToday && !isSpecialDay) {
-            if (subCount === 0) return "bg-red-500 text-white"
-            const ratio = subCount / requiredCount
-            if (ratio < 0.26) return "bg-orange-500 text-white shadow-sm"
-            if (ratio < 0.51) return "bg-amber-400 text-white shadow-sm"
-            if (ratio < 0.76) return "bg-sky-400 text-white shadow-sm"
-            return "bg-blue-400 text-white shadow-md"
-        }
+        if (isHoliday || isSunday(day)) return baseStyle + "text-red-500"
+        if (isSaturday(day)) return baseStyle + "text-blue-500"
 
-        // Holidays & weekends (past or future): white background, colored text only
-        if (isHoliday || isSunday(day)) return "bg-white text-red-400 border border-gray-100"
-        if (isSaturday(day)) return "bg-white text-blue-500 border border-gray-100"
-
-        // Future normal days
-        return "bg-white text-gray-700 border border-gray-100 hover:border-blue-200"
+        return baseStyle + "text-gray-700"
     }
 
 
@@ -152,9 +126,6 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
                         const isHoliday = !!holidayName
                         const requiredCount = isColumnParticipant ? 5 : 4
                         const isAllDone = subCount >= requiredCount
-                        const isPastOrToday2 = isBefore(day, new Date()) || isToday(day)
-                        const isWeekendDay = isSunday(day) || isSaturday(day)
-                        const isSpecialDay = isHoliday || isWeekendDay
                         const isBeforeStart = isBefore(day, PROGRAM_START_DATE)
                         const today = new Date()
                         const isYesterday = isBefore(today, new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1)) &&
@@ -166,13 +137,6 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
                             isYesterday
                         )
 
-                        // hasColoredBg = true only when getCardStyle actually returns a colored (non-white) background
-                        const hasColoredBg = !isBeforeStart && (
-                            isAllDone ||
-                            (isPastOrToday2 && !isToday(day) && !isSpecialDay) ||
-                            (isToday(day) && subCount > 0)
-                        )
-
                         return (
                             <div
                                 key={day.toString()}
@@ -181,32 +145,32 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
                                     "aspect-square rounded-xl flex flex-col items-center justify-center transition-all duration-200 relative group",
                                     isBeforeStart ? "cursor-not-allowed" :
                                         isClickable && onDateClick ? "cursor-pointer hover:ring-2 hover:ring-blue-300" : "cursor-default",
-                                    getCardStyle(day, daySubmissions, isCurrentMonth, isHoliday)
+                                    getCardStyle(day, isCurrentMonth, isHoliday)
                                 )}
                             >
-                                <span className={cn(
-                                    "text-sm font-semibold relative z-10",
-                                    hasColoredBg ? "text-white" : ""
-                                )}>
+                                <span className="text-sm font-semibold relative z-10">
                                     {format(day, 'd')}
                                 </span>
                                 {holidayName && (
-                                    <span className={cn(
-                                        "text-[10px] sm:text-xs mt-0.5 font-medium truncate w-full text-center px-1",
-                                        hasColoredBg ? "text-white/80" : ""
-                                    )}>
+                                    <span className="text-[10px] sm:text-xs mt-0.5 font-medium truncate w-full text-center px-1">
                                         {holidayName}
                                     </span>
                                 )}
 
-                                {subCount > 0 && (
+                                {isAllDone ? (
+                                    <div className="mt-1">
+                                        <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-md shadow-sm">
+                                            100%완료!
+                                        </span>
+                                    </div>
+                                ) : subCount > 0 ? (
                                     <div className="flex items-center gap-0.5 mt-1">
-                                        <Check className={cn("w-3 h-3", hasColoredBg ? "text-white" : "text-blue-500")} />
-                                        <span className={cn("text-xs font-bold", hasColoredBg ? "text-white" : "text-blue-600")}>
+                                        <Check className="w-3 h-3 text-blue-500" />
+                                        <span className="text-xs font-bold text-blue-600">
                                             {subCount}
                                         </span>
                                     </div>
-                                )}
+                                ) : null}
                             </div>
                         )
                     })}

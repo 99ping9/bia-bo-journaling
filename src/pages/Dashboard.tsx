@@ -270,6 +270,43 @@ const Dashboard = () => {
         }
     }
 
+    const handleDeleteUser = async (userIdToDelete: string, username: string) => {
+        if (!isAdminMode) return
+
+        if (!window.confirm(`정말로 '${username}' 사용자를 삭제하시겠습니까?\n이 사용자의 모든 기록이 함께 삭제되며, 복구할 수 없습니다.`)) {
+            return
+        }
+
+        try {
+            const { error } = await supabase
+                .from('users')
+                .delete()
+                .eq('id', userIdToDelete)
+
+            if (error) {
+                console.error('Error deleting user:', error)
+                alert(`사용자 삭제 실패: ${error.message}`)
+                return
+            }
+
+            // Remove from local state
+            setCommunityStatus(prev => prev.filter(u => u.id !== userIdToDelete))
+            if (viewedUser?.id === userIdToDelete) {
+                setViewedUser(user ? {
+                    id: user.id,
+                    username: user.username,
+                    avatar: user.avatar || '',
+                    bg_color: user.bg_color || '',
+                    is_column_challenge: user.is_column_challenge || false
+                } : null)
+            }
+            alert(`'${username}' 사용자가 삭제되었습니다.`)
+        } catch (err) {
+            console.error('Unexpected error during deletion:', err)
+            alert('삭제 중 예상치 못한 오류가 발생했습니다.')
+        }
+    }
+
     const handleChallengeToggle = async () => {
         if (!user) return
         const newVal = !viewedUser?.is_column_challenge
@@ -542,6 +579,8 @@ const Dashboard = () => {
                             is_column_challenge: false, // Default to false as we don't have this data yet
                             created_at: new Date().toISOString() // Mock/Default
                         })}
+                        isAdminMode={isAdminMode}
+                        onDeleteUser={handleDeleteUser}
                     />
 
                 </div>
