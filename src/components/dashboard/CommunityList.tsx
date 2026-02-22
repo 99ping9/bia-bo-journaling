@@ -8,6 +8,7 @@ interface UserStatus {
     hasSubmittedToday: boolean
     avatar?: string
     bg_color?: string
+    lastWeekFine?: number
 }
 
 interface CommunityListProps {
@@ -40,11 +41,18 @@ const CommunityList = ({ users, onUserClick, currentUserId, isAdminMode, onDelet
                                 <div className={`w-10 h-10 rounded-full ${user.bg_color || 'bg-white'} border border-slate-100 flex items-center justify-center text-xl shadow-sm transition-colors`}>
                                     {user.avatar || getAnimalAvatar(user.username)}
                                 </div>
-                                <span className="text-sm font-medium text-slate-700">
-                                    {user.username}
-                                </span>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-slate-700">
+                                        {user.username}
+                                    </span>
+                                    {(user.lastWeekFine ?? 0) > 0 && (
+                                        <span className="text-[10px] text-red-500 font-semibold">
+                                            벌금 {user.lastWeekFine?.toLocaleString()}원
+                                        </span>
+                                    )}
+                                </div>
                                 {isMe && (
-                                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-semibold">나</span>
+                                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1">나</span>
                                 )}
                             </div>
 

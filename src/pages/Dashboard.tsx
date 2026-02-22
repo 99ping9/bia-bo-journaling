@@ -24,7 +24,7 @@ const Dashboard = () => {
     const [submissions, setSubmissions] = useState<Record<string, SubmissionType[]>>({})
     const [submissionDetails, setSubmissionDetails] = useState<Record<string, Record<string, { link: string, amount: number | null }>>>({}) // date -> type -> {link, amount}
     const [submissionsLoaded, setSubmissionsLoaded] = useState(false)
-    const [communityStatus, setCommunityStatus] = useState<{ id: string, username: string, hasSubmittedToday: boolean, avatar?: string, bg_color?: string }[]>([])
+    const [communityStatus, setCommunityStatus] = useState<{ id: string, username: string, hasSubmittedToday: boolean, avatar?: string, bg_color?: string, lastWeekFine?: number }[]>([])
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState(new Date())
@@ -162,10 +162,48 @@ const Dashboard = () => {
             // Get all users
             const { data: allUsers, error: usersError } = await supabase
                 .from('users')
-                .select('id, username, avatar, bg_color') // Fetch new fields
-                .order('username')
+                .select('id, username, avatar, bg_color, is_column_challenge') // Fetch new fields
 
             if (usersError) throw usersError
+
+            // Fetch submissions for the past week to calculate fines for all users
+            const today = new Date()
+            const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 })
+            const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 1 })
+            const startStr = format(lastWeekStart, 'yyyy-MM-dd')
+            const endStr = format(lastWeekEnd, 'yyyy-MM-dd')
+
+            const { data: pastWeekJournals, error: pastWeekError } = await supabase
+                .from('journals')
+                .select('user_id, date, type')
+                .gte('date', startStr)
+                .lte('date', endStr)
+
+            if (pastWeekError) throw pastWeekError
+
+            const weekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
+                .filter(day => !isWeekend(day))
+                .filter(day => !isBefore(day, PROGRAM_START_DATE))
+
+            const userFines: Record<string, number> = {}
+
+            allUsers?.forEach(u => {
+                let totalMisses = 0
+                const isParticipant = u.is_column_challenge ?? false
+
+                weekDays.forEach(day => {
+                    const dateKey = format(day, 'yyyy-MM-dd')
+                    const userDaySubs = pastWeekJournals?.filter(j => j.user_id === u.id && j.date === dateKey).map(j => j.type) || []
+
+                    const requiredTypes: SubmissionType[] = ['journal', 'account', 'thread', 'mate']
+                    if (isParticipant) requiredTypes.push('column')
+
+                    const missingCount = requiredTypes.filter(type => !userDaySubs.includes(type)).length
+                    totalMisses += missingCount
+                })
+
+                userFines[u.id] = totalMisses * 10000
+            })
 
             // Get all submissions for today
             const { data: todayJournals, error: todayError } = await supabase
@@ -182,7 +220,8 @@ const Dashboard = () => {
                 username: u.username,
                 hasSubmittedToday: submittedUserIds.has(u.id),
                 avatar: u.avatar,
-                bg_color: u.bg_color
+                bg_color: u.bg_color,
+                lastWeekFine: userFines[u.id] || 0
             })).sort((a, b) => {
                 // Current user always first
                 if (a.id === user?.id) return -1
