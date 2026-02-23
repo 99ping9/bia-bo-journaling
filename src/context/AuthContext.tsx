@@ -8,6 +8,7 @@ interface AuthContextType {
     login: (name: string) => Promise<{ success: boolean; error?: string }>
     logout: () => void
     updateProfile: (newName: string, newAvatar?: string, newBgColor?: string) => Promise<{ success: boolean; error?: string }>
+    updateColumnChallenge: (isChallenge: boolean) => Promise<{ success: boolean; error?: string }>
     isAdmin: boolean
     checkAdmin: (password: string) => boolean
 }
@@ -143,6 +144,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    const updateColumnChallenge = async (isChallenge: boolean) => {
+        try {
+            if (!user) return { success: false, error: 'Not logged in' }
+
+            if (import.meta.env.VITE_USE_MOCK === 'true') {
+                const updatedUser: User = { ...user, is_column_challenge: isChallenge }
+                setUser(updatedUser)
+                localStorage.setItem('morning_journal_user', JSON.stringify(updatedUser))
+                return { success: true }
+            }
+
+            const { error } = await supabase
+                .from('users')
+                .update({ is_column_challenge: isChallenge })
+                .eq('id', user.id)
+
+            if (error) throw error
+
+            const updatedUser: User = { ...user, is_column_challenge: isChallenge }
+            setUser(updatedUser)
+            localStorage.setItem('morning_journal_user', JSON.stringify(updatedUser))
+            return { success: true }
+
+        } catch (err: any) {
+            console.error('Update challenge error:', err)
+            return { success: false, error: err.message || 'Failed to update challenge' }
+        }
+    }
+
     const checkAdmin = (password: string) => {
         if (password === ADMIN_PASSWORD) {
             setIsAdmin(true)
@@ -153,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, updateProfile, isAdmin, checkAdmin }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, updateProfile, updateColumnChallenge, isAdmin, checkAdmin }}>
             {children}
         </AuthContext.Provider>
     )

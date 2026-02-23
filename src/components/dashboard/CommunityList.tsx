@@ -9,6 +9,7 @@ interface UserStatus {
     avatar?: string
     bg_color?: string
     lastWeekFine?: number
+    is_column_challenge?: boolean
 }
 
 interface CommunityListProps {

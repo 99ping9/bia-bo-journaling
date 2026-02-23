@@ -17,14 +17,14 @@ import { ANIMALS, BG_COLORS } from '@/lib/constants'
 const PROGRAM_START_DATE = new Date(2026, 1, 22) // Feb 22, 2026
 
 const Dashboard = () => {
-    const { user } = useAuth()
+    const { user, updateProfile, updateColumnChallenge } = useAuth()
     const [viewedUser, setViewedUser] = useState<{ id: string, username: string, avatar: string, bg_color: string, is_column_challenge: boolean, created_at?: string } | null>(null)
     const isViewingSelf = user?.id === viewedUser?.id
 
     const [submissions, setSubmissions] = useState<Record<string, SubmissionType[]>>({})
     const [submissionDetails, setSubmissionDetails] = useState<Record<string, Record<string, { link: string, amount: number | null }>>>({}) // date -> type -> {link, amount}
     const [submissionsLoaded, setSubmissionsLoaded] = useState(false)
-    const [communityStatus, setCommunityStatus] = useState<{ id: string, username: string, hasSubmittedToday: boolean, avatar?: string, bg_color?: string, lastWeekFine?: number }[]>([])
+    const [communityStatus, setCommunityStatus] = useState<{ id: string, username: string, hasSubmittedToday: boolean, avatar?: string, bg_color?: string, lastWeekFine?: number, is_column_challenge?: boolean }[]>([])
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState(new Date())
@@ -38,7 +38,6 @@ const Dashboard = () => {
     const [tempName, setTempName] = useState('')
     const [tempAvatar, setTempAvatar] = useState('')
     const [tempBgColor, setTempBgColor] = useState('')
-    const { updateProfile } = useAuth()
 
     const handleUpdateName = async () => {
         if (!tempName.trim()) return
@@ -221,7 +220,8 @@ const Dashboard = () => {
                 hasSubmittedToday: submittedUserIds.has(u.id),
                 avatar: u.avatar,
                 bg_color: u.bg_color,
-                lastWeekFine: userFines[u.id] || 0
+                lastWeekFine: userFines[u.id] || 0,
+                is_column_challenge: u.is_column_challenge ?? false
             })).sort((a, b) => {
                 // Current user always first
                 if (a.id === user?.id) return -1
@@ -353,9 +353,8 @@ const Dashboard = () => {
         // Optimistic update
         if (viewedUser) setViewedUser({ ...viewedUser, is_column_challenge: newVal })
 
-        // Update DB (assuming updateProfile handles generic updates or we call supabase direct)
-        // For MVP quick fix:
-        await supabase.from('users').update({ is_column_challenge: newVal }).eq('id', user.id)
+        // Update DB and context
+        await updateColumnChallenge(newVal)
 
         // Refresh to ensure sync
         fetchData()
@@ -615,7 +614,7 @@ const Dashboard = () => {
                             username: u.username,
                             avatar: u.avatar || '',
                             bg_color: u.bg_color || '',
-                            is_column_challenge: false, // Default to false as we don't have this data yet
+                            is_column_challenge: u.is_column_challenge || false,
                             created_at: new Date().toISOString() // Mock/Default
                         })}
                         isAdminMode={isAdminMode}
