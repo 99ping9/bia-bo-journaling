@@ -9,7 +9,7 @@ import SubmissionModal from '@/components/dashboard/SubmissionModal'
 import CommunityList from '@/components/dashboard/CommunityList'
 import { Loader2, Plus, Pencil, Check, X } from 'lucide-react'
 
-import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend, isBefore, isToday, subDays, isSameDay } from 'date-fns'
+import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend, isBefore, isSameDay } from 'date-fns'
 import { SubmissionType, SUBMISSION_TYPES } from '@/types'
 import { ANIMALS, BG_COLORS } from '@/lib/constants'
 
@@ -247,9 +247,15 @@ const Dashboard = () => {
 
         if (!isAdminMode) {
             const today = new Date()
-            const yesterday = subDays(today, 1)
+
+            const dDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+            const dToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+
+            const isTodayValue = dToday.getTime() === dDate.getTime()
+            const isYesterday = dToday.getTime() - dDate.getTime() === 24 * 60 * 60 * 1000
+
             // Only allow today, yesterday, and the 22nd
-            if (!isToday(date) && !isSameDay(date, yesterday) && !is22nd) return
+            if (!isTodayValue && !isYesterday && !is22nd) return
         }
 
         setSelectedDate(date)
