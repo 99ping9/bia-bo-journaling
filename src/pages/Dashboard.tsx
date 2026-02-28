@@ -409,11 +409,36 @@ const Dashboard = () => {
     const fineAmount = calculateFine()
     const isParticipant = viewedUser?.is_column_challenge ?? false
 
+    const calculateThisWeekCounts = () => {
+        if (!submissionsLoaded) return null
+        const today = new Date()
+        const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 })
+        const thisWeekEnd = endOfWeek(today, { weekStartsOn: 1 })
+
+        const weekDays = eachDayOfInterval({ start: thisWeekStart, end: thisWeekEnd })
+
+        const counts: Record<string, number> = {}
+        SUBMISSION_TYPES.forEach(t => counts[t.id] = 0)
+
+        weekDays.forEach(day => {
+            const dateKey = format(day, 'yyyy-MM-dd')
+            const daySubs = submissions[dateKey] || []
+            daySubs.forEach(type => {
+                if (counts[type] !== undefined) {
+                    counts[type]++
+                }
+            })
+        })
+        return counts
+    }
+
+    const thisWeekCounts = calculateThisWeekCounts()
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header / Fine Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <div className="space-y-2">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="space-y-2 shrink-0">
                     {!isEditingName ? (
                         <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                             <div className={`w-10 h-10 rounded-full ${viewedUser?.bg_color || 'bg-white'} border border-slate-100 flex items-center justify-center text-xl shadow-sm mr-2 hidden md:flex`}>
@@ -527,7 +552,29 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="flex gap-2">
+                {/* This Week's Submission Counts */}
+                <div className="flex-1 flex justify-start xl:justify-center w-full overflow-x-auto pb-2 xl:pb-0 scrollbar-hide py-2">
+                    {thisWeekCounts && (
+                        <div className="flex gap-2 sm:gap-3 items-center">
+                            <span className="text-xs font-bold text-slate-400 mr-2 hidden sm:block">이번 주 완료</span>
+                            {SUBMISSION_TYPES.map(type => {
+                                if (type.id === 'column' && !isParticipant) return null;
+                                const count = thisWeekCounts[type.id];
+                                return (
+                                    <div key={type.id} className="flex flex-col items-center bg-slate-50 border border-slate-100 px-4 py-1.5 rounded-xl min-w-[64px]">
+                                        <span className="text-[11px] font-medium text-slate-500 mb-0.5">{type.label}</span>
+                                        <div className="flex items-baseline gap-0.5">
+                                            <span className={`text-lg font-bold ${count > 0 ? 'text-blue-600' : 'text-slate-700'}`}>{count}</span>
+                                            <span className="text-[10px] text-slate-400">회</span>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex gap-2 shrink-0">
                     {/* Settings / Challenge Toggle */}
                     {isViewingSelf && (
                         <button
