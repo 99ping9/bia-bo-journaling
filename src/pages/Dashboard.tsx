@@ -167,8 +167,8 @@ const Dashboard = () => {
 
             // Fetch submissions for the past week to calculate fines for all users
             const today = new Date()
-            const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 })
-            const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 1 })
+            const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 0 })
+            const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 0 })
             const startStr = format(lastWeekStart, 'yyyy-MM-dd')
             const endStr = format(lastWeekEnd, 'yyyy-MM-dd')
 
@@ -381,8 +381,8 @@ const Dashboard = () => {
     const calculateFine = () => {
         if (!submissionsLoaded) return 0
         const today = new Date()
-        const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 })
-        const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 1 })
+        const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 0 })
+        const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 0 })
 
         const weekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
             .filter(day => !isWeekend(day))
