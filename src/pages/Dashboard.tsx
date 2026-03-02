@@ -305,14 +305,14 @@ const Dashboard = () => {
         const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
         try {
-            // Mate "unchecked" means the user wants to UNDO/delete their submission
-            if (data.type === 'mate' && data.link === 'unchecked') {
+            // "unchecked" or empty amount means the user wants to UNDO/delete their submission
+            if (data.link === 'unchecked' || (data.type === 'account' && !data.amount && data.amount !== 0)) {
                 const { error } = await supabase
                     .from('journals')
                     .delete()
                     .eq('user_id', targetUserId)
                     .eq('date', dateStr)
-                    .eq('type', 'mate')
+                    .eq('type', data.type)
                 if (error) {
                     console.error('Delete error:', error)
                     alert(`삭제 실패: ${error.message}`)

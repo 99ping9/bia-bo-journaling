@@ -30,7 +30,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
             if (type === 'account') {
                 setAmount(existing.amount != null ? String(existing.amount) : '')
             } else if (type !== 'mate') {
-                setLink(existing.link && existing.link !== 'completed' ? existing.link : '')
+                setLink(existing.link || '')
             }
             if (type === 'mate') setMateConfirmed(true)
         } else {
@@ -55,19 +55,29 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        // Validation
-        if (selectedType === 'account' && !amount) return
-        if (['journal', 'thread', 'column'].includes(selectedType) && !link.trim()) return
+        const isCurrentlySubmitted = submittedTypes.includes(selectedType);
+
+        // Validation - allow bypassing if they are deleting an existing submission
+        if (!isCurrentlySubmitted) {
+            if (selectedType === 'account' && !amount) return
+            if (['journal', 'thread', 'column'].includes(selectedType) && !link.trim()) return
+        }
 
         setIsSubmitting(true)
 
-        // For 'mate', send 'completed' or 'unchecked' so Dashboard can upsert or delete
-        const contentToSubmit = selectedType === 'mate' ? (mateConfirmed ? 'completed' : 'unchecked') : link
+        let contentToSubmit = link.trim()
+
+        // If they empty out a previously completed submission, mark it as 'unchecked' to delete it
+        if (selectedType === 'mate') {
+            contentToSubmit = mateConfirmed ? 'completed' : 'unchecked'
+        } else if (['journal', 'thread', 'column'].includes(selectedType) && !contentToSubmit) {
+            contentToSubmit = 'unchecked'
+        }
 
         await onSubmit({
             type: selectedType,
             link: contentToSubmit,
-            amount: selectedType === 'account' ? parseInt(amount.replace(/,/g, ''), 10) : undefined
+            amount: selectedType === 'account' ? (amount ? parseInt(amount.replace(/,/g, ''), 10) : undefined) : undefined
         })
 
         setIsSubmitting(false)
