@@ -18,10 +18,10 @@ import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 import { SubmissionType } from '@/types'
+import { HOLIDAYS_2026 } from '@/lib/constants'
 
 // Programme start date — no logging or coloring before this
 const PROGRAM_START_DATE = new Date(2026, 1, 22) // Feb 22, 2026
-
 
 
 const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant = false, isAdminMode = false }: {
@@ -47,31 +47,6 @@ const Calendar = ({ submissions, onDateClick, currentDate, isColumnParticipant =
     })
 
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-    // 2026 Holidays
-    const HOLIDAYS_2026: Record<string, string> = {
-        '2026-01-01': '신정',
-        '2026-02-16': '설날',
-        '2026-02-17': '설날',
-        '2026-02-18': '설날',
-        '2026-03-01': '삼일절',
-        '2026-03-02': '대체공휴일',
-        '2026-05-05': '어린이날',
-        '2026-05-24': '부처님오신날',
-        '2026-05-25': '대체공휴일',
-        '2026-06-06': '현충일',
-        '2026-08-15': '광복절',
-        '2026-08-17': '대체공휴일',
-        '2026-09-24': '추석',
-        '2026-09-25': '추석',
-        '2026-09-26': '추석',
-        '2026-09-28': '대체공휴일',
-        '2026-10-03': '개천절',
-        '2026-10-05': '대체공휴일',
-        '2026-10-09': '한글날',
-        '2026-12-25': '성탄절'
-    }
-
     const getCardStyle = (day: Date, isCurrentMonth: boolean, isHoliday: boolean) => {
         if (!isCurrentMonth) return "opacity-30 grayscale"
         // Before program start: show as locked/disabled

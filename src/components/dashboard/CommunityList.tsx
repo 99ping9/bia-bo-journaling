@@ -1,6 +1,6 @@
-
 import { getAnimalAvatar } from '@/lib/utils'
 import { X } from 'lucide-react'
+import { SUBMISSION_TYPES } from '@/types'
 
 interface UserStatus {
     id: string
@@ -12,6 +12,8 @@ interface UserStatus {
     lastWeekCompletionCount?: number
     lastWeekRequired?: number
     is_column_challenge?: boolean
+    lastWeekTypeCounts?: Record<string, number>
+    penaltyReasons?: string
 }
 
 interface CommunityListProps {
@@ -35,9 +37,7 @@ const CommunityList = ({ users, onUserClick, currentUserId, isAdminMode, onDelet
             <div className="space-y-3 min-h-[500px] max-h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
                 {users.map((user, idx) => {
                     const isMe = user.id === currentUserId
-                    const completionCount = user.lastWeekCompletionCount || 0
                     const requiredCount = user.lastWeekRequired || 20
-                    const isPerfect = completionCount >= requiredCount
 
                     return (
                         <div
@@ -64,8 +64,26 @@ const CommunityList = ({ users, onUserClick, currentUserId, isAdminMode, onDelet
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <div className={`text-xs px-2.5 py-1 rounded-lg font-medium border ${isPerfect ? 'bg-green-50 text-green-600 border-green-200' : 'bg-white text-slate-500 border-slate-200'}`} title="지난주 완료 횟수">
-                                    완료 {completionCount}/{requiredCount}
+                                <div className="flex flex-col items-end gap-1">
+                                    <div className="flex gap-1 flex-wrap justify-end">
+                                        {SUBMISSION_TYPES.map(t => {
+                                            if (t.id === 'column' && !user.is_column_challenge) return null;
+                                            const count = user.lastWeekTypeCounts?.[t.id] || 0;
+                                            // required per type = total required / number of types
+                                            const numTypes = user.is_column_challenge ? 5 : 4;
+                                            const req = Math.max(0, Math.floor(requiredCount / numTypes));
+                                            return (
+                                                <span key={t.id} className={`text-[10px] px-1.5 py-0.5 rounded border ${count >= req ? 'bg-green-50 text-green-600 border-green-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`} title={t.label}>
+                                                    {t.label} {count}/{req}
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+                                    {user.penaltyReasons && (
+                                        <div className="text-[10px] text-red-500 font-medium truncate max-w-[150px] sm:max-w-xs text-right" title={user.penaltyReasons}>
+                                            사유: {user.penaltyReasons}
+                                        </div>
+                                    )}
                                 </div>
                                 {isAdminMode && (
                                     <button

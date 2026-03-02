@@ -13,9 +13,10 @@ interface SubmissionModalProps {
     existingData: Record<string, { link: string, amount: number | null }> // type -> {link, amount}
     isColumnParticipant: boolean
     defaultType?: SubmissionType
+    isAdminViewing?: boolean
 }
 
-const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, existingData, isColumnParticipant, defaultType }: SubmissionModalProps) => {
+const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, existingData, isColumnParticipant, defaultType, isAdminViewing = false }: SubmissionModalProps) => {
     const [selectedType, setSelectedType] = useState<SubmissionType>(defaultType || 'journal')
     const [link, setLink] = useState('')
     const [amount, setAmount] = useState('')
@@ -82,7 +83,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/50 shrink-0">
                     <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <CalendarIcon className="w-5 h-5 text-blue-500" />
-                        기록하기 <span className="text-slate-400 text-sm font-normal">| {format(date, 'MM.dd')}</span>
+                        {isAdminViewing ? '기록 보기' : '기록하기'} <span className="text-slate-400 text-sm font-normal">| {format(date, 'MM.dd')}</span>
                     </h3>
                     <button
                         onClick={onClose}
@@ -144,7 +145,8 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
                                                             if (e.target.checked) setLink('completed')
                                                             else setLink('')
                                                         }}
-                                                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                                                        disabled={isAdminViewing}
+                                                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
                                                     />
                                                     <span className="text-sm text-slate-600 font-medium">개인 공간 작성 (링크 생략)</span>
                                                 </label>
@@ -162,6 +164,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
                                                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
                                                     required={!isPersonal}
                                                     autoFocus
+                                                    readOnly={isAdminViewing}
                                                 />
                                             </div>
                                         )}
@@ -188,6 +191,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
                                             className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg"
                                             required
                                             autoFocus
+                                            readOnly={isAdminViewing}
                                         />
                                     </div>
                                 </div>
@@ -197,11 +201,12 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
                                 <div className="py-4">
                                     <button
                                         type="button"
-                                        onClick={() => setMateConfirmed(prev => !prev)}
+                                        onClick={() => !isAdminViewing && setMateConfirmed(prev => !prev)}
+                                        disabled={isAdminViewing}
                                         className={`w-full flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 ${mateConfirmed
                                             ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200'
                                             : 'bg-slate-50 border-slate-200 hover:border-blue-200'
-                                            }`}
+                                            } ${isAdminViewing ? 'cursor-default opacity-80' : ''}`}
                                     >
                                         <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${mateConfirmed ? 'bg-blue-600 text-white' : 'border-2 border-slate-300 bg-white'
                                             }`}>
@@ -219,15 +224,17 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
                                 </div>
                             )}
 
-                            <div className="pt-2 flex justify-end">
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isSubmitting ? '저장 중... ✈' : isSubmitted ? '수정하기 ✏️' : '인증하기'} <Send className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {!isAdminViewing && (
+                                <div className="pt-2 flex justify-end">
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isSubmitting ? '저장 중... ✈' : isSubmitted ? '수정하기 ✏️' : '인증하기'} <Send className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                         </form>
                     )}
                 </div>

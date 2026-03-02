@@ -11,7 +11,7 @@ import { Loader2, Plus, Pencil, Check, X } from 'lucide-react'
 
 import { startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, isWeekend, isBefore, isSameDay } from 'date-fns'
 import { SubmissionType, SUBMISSION_TYPES } from '@/types'
-import { ANIMALS, BG_COLORS } from '@/lib/constants'
+import { ANIMALS, BG_COLORS, HOLIDAYS_2026 } from '@/lib/constants'
 
 // Programme launches Feb 22 2026 — no fine or logging before this date
 const PROGRAM_START_DATE = new Date(2026, 1, 22) // Feb 22, 2026
@@ -183,9 +183,12 @@ const Dashboard = () => {
             const weekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
                 .filter(day => !isWeekend(day))
                 .filter(day => !isBefore(day, PROGRAM_START_DATE))
+                .filter(day => !HOLIDAYS_2026[format(day, 'yyyy-MM-dd')])
+
+            const requiredDaysCount = weekDays.length
 
             const userFines: Record<string, number> = {}
-            const userLastWeekCompletions: Record<string, { count: number, required: number }> = {}
+            const userLastWeekCompletions: Record<string, { count: number, required: number, typeCounts: Record<string, number>, penaltyReasons: string }> = {}
 
             allUsers?.forEach(u => {
                 const isParticipant = u.is_column_challenge ?? false
@@ -209,18 +212,25 @@ const Dashboard = () => {
                 })
 
                 let totalMisses = 0
+                const missedTypes: string[] = []
+
                 requiredTypes.forEach(t => {
                     const count = typeCounts[t]
                     totalCompleted += count
-                    if (count < 5) {
-                        totalMisses += (5 - count)
+                    if (count < requiredDaysCount) {
+                        const misses = requiredDaysCount - count
+                        totalMisses += misses
+                        const label = SUBMISSION_TYPES.find(x => x.id === t)?.label || t
+                        missedTypes.push(`${label} -${misses}건`)
                     }
                 })
 
                 userFines[u.id] = totalMisses * 10000
                 userLastWeekCompletions[u.id] = {
                     count: totalCompleted,
-                    required: requiredTypes.length * 5
+                    required: requiredTypes.length * requiredDaysCount,
+                    typeCounts: typeCounts,
+                    penaltyReasons: missedTypes.length > 0 ? missedTypes.join(', ') : ''
                 }
             })
 
@@ -243,6 +253,8 @@ const Dashboard = () => {
                 lastWeekFine: userFines[u.id] || 0,
                 lastWeekCompletionCount: userLastWeekCompletions[u.id]?.count || 0,
                 lastWeekRequired: userLastWeekCompletions[u.id]?.required || 20,
+                lastWeekTypeCounts: userLastWeekCompletions[u.id]?.typeCounts || {},
+                penaltyReasons: userLastWeekCompletions[u.id]?.penaltyReasons || '',
                 is_column_challenge: u.is_column_challenge ?? false
             })).sort((a, b) => {
                 // Current user always first
@@ -397,8 +409,8 @@ const Dashboard = () => {
     }
 
     // Fine Calculation: 10,000원 per missing required submission
-    // Based on the full Sun-Sat week, 5 required per type
-    // Only counts days on or after PROGRAM_START_DATE
+    // Based on the full Sun-Sat week, required count dynamically calculated
+    // Only counts days on or after PROGRAM_START_DATE, excluding weekends and holidays
     const calculateFine = () => {
         if (!submissionsLoaded) return 0
         const today = new Date()
@@ -406,7 +418,11 @@ const Dashboard = () => {
         const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 0 })
 
         const weekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
+            .filter(day => !isWeekend(day))
             .filter(day => !isBefore(day, PROGRAM_START_DATE)) // skip days before program start
+            .filter(day => !HOLIDAYS_2026[format(day, 'yyyy-MM-dd')])
+
+        const requiredDaysCount = weekDays.length
 
         const isParticipant = viewedUser?.is_column_challenge ?? false
         const requiredTypes: SubmissionType[] = ['journal', 'account', 'thread', 'mate']
@@ -429,8 +445,8 @@ const Dashboard = () => {
         let totalMisses = 0
         requiredTypes.forEach(t => {
             const count = typeCounts[t]
-            if (count < 5) {
-                totalMisses += (5 - count)
+            if (count < requiredDaysCount) {
+                totalMisses += (requiredDaysCount - count)
             }
         })
 
@@ -444,8 +460,8 @@ const Dashboard = () => {
     const calculateThisWeekCounts = () => {
         if (!submissionsLoaded) return null
         const today = new Date()
-        const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 })
-        const thisWeekEnd = endOfWeek(today, { weekStartsOn: 1 })
+        const thisWeekStart = startOfWeek(today, { weekStartsOn: 0 })
+        const thisWeekEnd = endOfWeek(today, { weekStartsOn: 0 })
 
         const weekDays = eachDayOfInterval({ start: thisWeekStart, end: thisWeekEnd })
 
@@ -718,6 +734,7 @@ const Dashboard = () => {
                 existingData={submissionDetails[format(selectedDate, 'yyyy-MM-dd')] || {}}
                 isColumnParticipant={isParticipant}
                 defaultType={selectedDefaultType}
+                isAdminViewing={isAdminMode && !isViewingSelf}
             />
 
             {/* Admin Mode - subtle button at very bottom */}
