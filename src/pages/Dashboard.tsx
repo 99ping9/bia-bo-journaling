@@ -185,23 +185,43 @@ const Dashboard = () => {
                 .filter(day => !isBefore(day, PROGRAM_START_DATE))
 
             const userFines: Record<string, number> = {}
+            const userLastWeekCompletions: Record<string, { count: number, required: number }> = {}
 
             allUsers?.forEach(u => {
-                let totalMisses = 0
                 const isParticipant = u.is_column_challenge ?? false
+                const requiredTypes: SubmissionType[] = ['journal', 'account', 'thread', 'mate']
+                if (isParticipant) requiredTypes.push('column')
+
+                const typeCounts: Record<string, number> = {}
+                requiredTypes.forEach(t => typeCounts[t] = 0)
+                let totalCompleted = 0
 
                 weekDays.forEach(day => {
                     const dateKey = format(day, 'yyyy-MM-dd')
                     const userDaySubs = pastWeekJournals?.filter(j => j.user_id === u.id && j.date === dateKey).map(j => j.type) || []
 
-                    const requiredTypes: SubmissionType[] = ['journal', 'account', 'thread', 'mate']
-                    if (isParticipant) requiredTypes.push('column')
+                    userDaySubs.forEach(t => {
+                        if (requiredTypes.includes(t as SubmissionType)) {
+                            // Only count up to 1 per day per type (since userDaySubs shouldn't have duplicates, but just in case)
+                            typeCounts[t]++
+                        }
+                    })
+                })
 
-                    const missingCount = requiredTypes.filter(type => !userDaySubs.includes(type)).length
-                    totalMisses += missingCount
+                let totalMisses = 0
+                requiredTypes.forEach(t => {
+                    const count = typeCounts[t]
+                    totalCompleted += count
+                    if (count < 5) {
+                        totalMisses += (5 - count)
+                    }
                 })
 
                 userFines[u.id] = totalMisses * 10000
+                userLastWeekCompletions[u.id] = {
+                    count: totalCompleted,
+                    required: requiredTypes.length * 5
+                }
             })
 
             // Get all submissions for today
@@ -221,6 +241,8 @@ const Dashboard = () => {
                 avatar: u.avatar,
                 bg_color: u.bg_color,
                 lastWeekFine: userFines[u.id] || 0,
+                lastWeekCompletionCount: userLastWeekCompletions[u.id]?.count || 0,
+                lastWeekRequired: userLastWeekCompletions[u.id]?.required || 20,
                 is_column_challenge: u.is_column_challenge ?? false
             })).sort((a, b) => {
                 // Current user always first
@@ -375,9 +397,8 @@ const Dashboard = () => {
     }
 
     // Fine Calculation: 10,000원 per missing required submission
-    // Column OFF: max 4 types × 5 days = 200,000원
-    // Column ON:  max 5 types × 5 days = 250,000원
-    // Only counts weekdays on or after PROGRAM_START_DATE
+    // Based on the full Sun-Sat week, 5 required per type
+    // Only counts days on or after PROGRAM_START_DATE
     const calculateFine = () => {
         if (!submissionsLoaded) return 0
         const today = new Date()
@@ -385,21 +406,32 @@ const Dashboard = () => {
         const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 0 })
 
         const weekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
-            .filter(day => !isWeekend(day))
             .filter(day => !isBefore(day, PROGRAM_START_DATE)) // skip days before program start
 
-        let totalMisses = 0
         const isParticipant = viewedUser?.is_column_challenge ?? false
+        const requiredTypes: SubmissionType[] = ['journal', 'account', 'thread', 'mate']
+        if (isParticipant) requiredTypes.push('column')
+
+        const typeCounts: Record<string, number> = {}
+        requiredTypes.forEach(t => typeCounts[t] = 0)
 
         weekDays.forEach(day => {
             const dateKey = format(day, 'yyyy-MM-dd')
             const daySubs = submissions[dateKey] || []
 
-            const requiredTypes: SubmissionType[] = ['journal', 'account', 'thread', 'mate']
-            if (isParticipant) requiredTypes.push('column')
+            daySubs.forEach(t => {
+                if (requiredTypes.includes(t)) {
+                    typeCounts[t]++
+                }
+            })
+        })
 
-            const missingCount = requiredTypes.filter(type => !daySubs.includes(type)).length
-            totalMisses += missingCount
+        let totalMisses = 0
+        requiredTypes.forEach(t => {
+            const count = typeCounts[t]
+            if (count < 5) {
+                totalMisses += (5 - count)
+            }
         })
 
         return totalMisses * 10000

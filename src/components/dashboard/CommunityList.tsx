@@ -9,6 +9,8 @@ interface UserStatus {
     avatar?: string
     bg_color?: string
     lastWeekFine?: number
+    lastWeekCompletionCount?: number
+    lastWeekRequired?: number
     is_column_challenge?: boolean
 }
 
@@ -33,6 +35,10 @@ const CommunityList = ({ users, onUserClick, currentUserId, isAdminMode, onDelet
             <div className="space-y-3 min-h-[500px] max-h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
                 {users.map((user, idx) => {
                     const isMe = user.id === currentUserId
+                    const completionCount = user.lastWeekCompletionCount || 0
+                    const requiredCount = user.lastWeekRequired || 20
+                    const isPerfect = completionCount >= requiredCount
+
                     return (
                         <div
                             key={idx}
@@ -57,18 +63,23 @@ const CommunityList = ({ users, onUserClick, currentUserId, isAdminMode, onDelet
                                 )}
                             </div>
 
-                            {isAdminMode && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        onDeleteUser?.(user.id, user.username)
-                                    }}
-                                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors ml-2"
-                                    title="사용자 삭제"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            )}
+                            <div className="flex items-center gap-2">
+                                <div className={`text-xs px-2.5 py-1 rounded-lg font-medium border ${isPerfect ? 'bg-green-50 text-green-600 border-green-200' : 'bg-white text-slate-500 border-slate-200'}`} title="지난주 완료 횟수">
+                                    완료 {completionCount}/{requiredCount}
+                                </div>
+                                {isAdminMode && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onDeleteUser?.(user.id, user.username)
+                                        }}
+                                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors ml-2"
+                                        title="사용자 삭제"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )
                 })}
