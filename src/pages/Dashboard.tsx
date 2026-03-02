@@ -300,6 +300,7 @@ const Dashboard = () => {
     const handleSubmit = async (data: { link: string, type: SubmissionType, amount?: number }) => {
         if (!user) return
 
+        const targetUserId = (isAdminMode && viewedUser) ? viewedUser.id : user.id;
         const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
         try {
@@ -308,7 +309,7 @@ const Dashboard = () => {
                 const { error } = await supabase
                     .from('journals')
                     .delete()
-                    .eq('user_id', user.id)
+                    .eq('user_id', targetUserId)
                     .eq('date', dateStr)
                     .eq('type', 'mate')
                 if (error) {
@@ -317,12 +318,12 @@ const Dashboard = () => {
                     return
                 }
                 await fetchData()
-                await fetchUserSubmissions(user.id)
+                await fetchUserSubmissions(targetUserId)
                 return
             }
 
             const payload = {
-                user_id: user.id,
+                user_id: targetUserId,
                 date: dateStr,
                 type: data.type,
                 link: data.link?.trim() || 'completed',
@@ -341,7 +342,7 @@ const Dashboard = () => {
             }
 
             await fetchData()
-            await fetchUserSubmissions(user.id)
+            await fetchUserSubmissions(targetUserId)
 
         } catch (err) {
             console.error('Unexpected error:', err)
@@ -662,12 +663,12 @@ const Dashboard = () => {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            if (isViewingSelf && !(type.id === 'column' && !isParticipant)) {
+                                            if ((isViewingSelf || isAdminMode) && !(type.id === 'column' && !isParticipant)) {
                                                 handleDateClick(today, type.id as SubmissionType);
                                             }
                                         }}
-                                        disabled={!isViewingSelf || (type.id === 'column' && !isParticipant)}
-                                        className={`h-12 w-full flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100 transition-colors ${isViewingSelf && !(type.id === 'column' && !isParticipant)
+                                        disabled={!(isViewingSelf || isAdminMode) || (type.id === 'column' && !isParticipant)}
+                                        className={`h-12 w-full flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100 transition-colors ${(isViewingSelf || isAdminMode) && !(type.id === 'column' && !isParticipant)
                                             ? 'hover:bg-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20'
                                             : 'cursor-default'
                                             }`}
@@ -698,7 +699,7 @@ const Dashboard = () => {
                 <div className="lg:col-span-2 space-y-6">
                     <Calendar
                         submissions={submissions}
-                        onDateClick={isViewingSelf ? handleDateClick : undefined}
+                        onDateClick={isViewingSelf || isAdminMode ? handleDateClick : undefined}
                         currentDate={selectedDate}
                         isColumnParticipant={isParticipant}
                         isAdminMode={isAdminMode}
@@ -734,7 +735,7 @@ const Dashboard = () => {
                 existingData={submissionDetails[format(selectedDate, 'yyyy-MM-dd')] || {}}
                 isColumnParticipant={isParticipant}
                 defaultType={selectedDefaultType}
-                isAdminViewing={isAdminMode && !isViewingSelf}
+                isAdminViewing={false}
             />
 
             {/* Admin Mode - subtle button at very bottom */}
