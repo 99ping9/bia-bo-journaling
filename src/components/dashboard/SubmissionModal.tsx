@@ -172,7 +172,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
                                                     onChange={(e) => setLink(e.target.value)}
                                                     placeholder={selectedType === 'column' ? "Notion or Blog URL" : "URL을 입력해주세요"}
                                                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
-                                                    required={!isPersonal}
+                                                    required={!isPersonal && !isSubmitted}
                                                     autoFocus
                                                     readOnly={isAdminViewing}
                                                 />
@@ -199,7 +199,7 @@ const SubmissionModal = ({ isOpen, onClose, date, onSubmit, submittedTypes, exis
                                             onChange={(e) => setAmount(e.target.value)}
                                             placeholder="금액 입력"
                                             className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-lg"
-                                            required
+                                            required={!isSubmitted}
                                             autoFocus
                                             readOnly={isAdminViewing}
                                         />
