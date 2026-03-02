@@ -180,12 +180,13 @@ const Dashboard = () => {
 
             if (pastWeekError) throw pastWeekError
 
-            const weekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
+            const requiredDaysCount = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
                 .filter(day => !isWeekend(day))
                 .filter(day => !isBefore(day, PROGRAM_START_DATE))
                 .filter(day => !HOLIDAYS_2026[format(day, 'yyyy-MM-dd')])
+                .length;
 
-            const requiredDaysCount = weekDays.length
+            const allWeekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd });
 
             const userFines: Record<string, number> = {}
             const userLastWeekCompletions: Record<string, { count: number, required: number, typeCounts: Record<string, number>, penaltyReasons: string }> = {}
@@ -199,7 +200,7 @@ const Dashboard = () => {
                 requiredTypes.forEach(t => typeCounts[t] = 0)
                 let totalCompleted = 0
 
-                weekDays.forEach(day => {
+                allWeekDays.forEach(day => {
                     const dateKey = format(day, 'yyyy-MM-dd')
                     const userDaySubs = pastWeekJournals?.filter(j => j.user_id === u.id && j.date === dateKey).map(j => j.type) || []
 
@@ -418,12 +419,13 @@ const Dashboard = () => {
         const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 0 })
         const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 0 })
 
-        const weekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
+        const requiredDaysCount = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd })
             .filter(day => !isWeekend(day))
             .filter(day => !isBefore(day, PROGRAM_START_DATE)) // skip days before program start
             .filter(day => !HOLIDAYS_2026[format(day, 'yyyy-MM-dd')])
+            .length;
 
-        const requiredDaysCount = weekDays.length
+        const allWeekDays = eachDayOfInterval({ start: lastWeekStart, end: lastWeekEnd });
 
         const isParticipant = viewedUser?.is_column_challenge ?? false
         const requiredTypes: SubmissionType[] = ['journal', 'account', 'thread', 'mate']
@@ -432,7 +434,7 @@ const Dashboard = () => {
         const typeCounts: Record<string, number> = {}
         requiredTypes.forEach(t => typeCounts[t] = 0)
 
-        weekDays.forEach(day => {
+        allWeekDays.forEach(day => {
             const dateKey = format(day, 'yyyy-MM-dd')
             const daySubs = submissions[dateKey] || []
 
