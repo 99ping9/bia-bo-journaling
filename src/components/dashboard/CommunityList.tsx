@@ -73,9 +73,10 @@ const CommunityList = ({ users, onUserClick, currentUserId, isAdminMode, onDelet
                                             const numTypes = user.is_column_challenge ? 5 : 4;
                                             const req = Math.max(0, Math.floor(requiredCount / numTypes));
                                             return (
-                                                <span key={t.id} className={`text-[10px] px-1.5 py-0.5 rounded border ${count >= req ? 'bg-green-50 text-green-600 border-green-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`} title={t.label}>
-                                                    {t.label} {count}/{req}
-                                                </span>
+                                                <div key={t.id} className={`flex flex-col items-center justify-center text-[10px] px-1.5 py-0.5 rounded border ${count >= req ? 'bg-green-50 text-green-600 border-green-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`} title={t.label}>
+                                                    <span className="font-semibold">{t.label}</span>
+                                                    <span>{count}/{req}</span>
+                                                </div>
                                             );
                                         })}
                                     </div>
